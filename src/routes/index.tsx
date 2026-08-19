@@ -78,20 +78,10 @@ function InvitationExperience() {
                 <Monogram size={78} />
               </div>
 
-              {/* Names & Date */}
-              <h1 className="font-creative mt-3 text-2xl sm:text-3xl font-semibold tracking-wide text-burgundy">
+              {/* Names only (no date on outer card) */}
+              <h1 className="font-creative mt-3.5 mb-5 text-2xl sm:text-3xl font-semibold tracking-wider text-burgundy">
                 Parth &amp; Namrata
               </h1>
-
-              <div className="mt-1.5 flex items-center justify-center gap-3">
-                <span className="h-px w-8 sm:w-12 bg-gradient-to-r from-transparent to-gold/70" />
-                <p className="text-[0.62rem] sm:text-[0.66rem] uppercase tracking-[0.28em] text-gold-deep font-semibold whitespace-nowrap">
-                  24 &mdash; 25 FEB 2027 &middot; RAJKOT
-                </p>
-                <span className="h-px w-8 sm:w-12 bg-gradient-to-l from-transparent to-gold/70" />
-              </div>
-
-              <Divider className="my-4" />
 
               {/* Centered Royal Envelope */}
               <div className="w-full">

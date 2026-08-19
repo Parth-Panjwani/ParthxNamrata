@@ -11,7 +11,7 @@ import { CornerFlourishes, Divider } from "./Ornaments";
 const STORAGE_KEY = "pn-rsvp";
 
 const formSchema = z.object({
-  fullName: z.string().trim().min(2, "Please enter your full name").max(120),
+  fullName: z.string().trim().min(2, "Please enter your name").max(120),
   mobile: z.string().trim().default(""),
   attendance: z.enum(["yes", "unsure", "no"]),
   adults: z.coerce.number().int().min(1).max(50).default(2),
@@ -306,12 +306,12 @@ export function RsvpSection() {
               {/* Name Input (Always shown) */}
               <div>
                 <label className={labelClass} htmlFor="fullName">
-                  Your Full Name
+                  Your Name
                 </label>
                 <input
                   id="fullName"
                   className={fieldClass}
-                  placeholder="e.g. Parth Panjwani"
+                  placeholder="Your Name"
                   autoComplete="name"
                   {...register("fullName")}
                 />

@@ -68,8 +68,11 @@ export function Envelope({ onOpened }: { onOpened: () => void }) {
           transition={{ duration: 1.1, ease: EASE }}
         >
           <div className="flex flex-col items-center justify-center gap-1 px-4 text-center">
-            <Monogram size={72} />
-            <p className="text-[0.62rem] uppercase tracking-[0.28em] text-gold-deep font-semibold mt-1.5">
+            <Monogram size={66} />
+            <p className="font-creative text-base sm:text-lg font-semibold text-burgundy tracking-wide mt-1 leading-tight">
+              Parth &amp; Namrata
+            </p>
+            <p className="text-[0.6rem] sm:text-[0.62rem] uppercase tracking-[0.26em] text-gold-deep font-semibold mt-0.5">
               24 &mdash; 25 FEB 2027
             </p>
           </div>

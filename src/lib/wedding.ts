@@ -31,12 +31,12 @@ export const CELEBRATIONS: {
     events: [
       {
         title: "Haldi + Carnival",
-        description: "Turmeric, music, pool party and festive joy.",
+        description: "Colours, music & poolside chaos.",
         icon: "haldi",
       },
       {
         title: "Sangeet Night",
-        description: "An evening of dance performances, music & cocktails.",
+        description: "Music, moves & a little friendly competition.",
         icon: "sangeet",
       },
     ],
@@ -48,7 +48,7 @@ export const CELEBRATIONS: {
     events: [
       {
         title: "Wedding & Reception",
-        description: "Baraat procession, sacred pheras & blessings followed by royal dinner & celebrations.",
+        description: "Baraat. Pheras. Dinner. And the beginning of forever.",
         icon: "wedding",
       },
     ],
