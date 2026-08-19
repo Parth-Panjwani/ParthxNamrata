@@ -11,7 +11,7 @@ import { CornerFlourishes, Divider, Monogram, PetalField } from "@/components/in
 
 const TITLE = "Parth & Namrata — Wedding Celebrations, Rajkot";
 const DESCRIPTION =
-  "Save the date and event itinerary for the wedding of Parth & Namrata in Rajkot — celebrations, venue details and RSVP.";
+  "Save the date for the wedding celebrations of Parth & Namrata in Rajkot — celebrations, venue details and RSVP.";
 
 export const Route = createFileRoute("/")({
   head: () => ({

@@ -739,8 +739,8 @@ function AdminPage() {
                           className="mt-1.5 w-full rounded-xl border border-gold/40 bg-ivory px-3.5 py-2.5 text-xs sm:text-sm text-charcoal outline-none focus:border-gold"
                         >
                           <option value="both">Both Days (24 & 25 Feb)</option>
-                          <option value="24">24th Feb (Haldi & Sangeet)</option>
-                          <option value="25">25th Feb (Wedding & Reception)</option>
+                          <option value="24">24th Feb (Day 1)</option>
+                          <option value="25">25th Feb (Day 2)</option>
                         </select>
                       </div>
                       <div>

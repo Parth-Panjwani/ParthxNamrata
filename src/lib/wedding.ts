@@ -12,48 +12,37 @@ export const WEDDING_START_ISO = "2027-02-24T12:00:00+05:30";
 
 export const QUOTE = "Two beautiful days filled with love, laughter and lifelong memories.";
 
-export type CelebrationEvent = {
-  title: string;
-  description: string;
-  icon: "haldi" | "sangeet" | "wedding" | "reception";
+export type CelebrationDay = {
+  dayNum: string;
+  dayName: string;
+  dateNum: string;
+  month: string;
+  year: string;
+  fullDate: string;
 };
 
-export const CELEBRATIONS: {
-  date: string;
-  dayName: string;
-  fullDate: string;
-  events: CelebrationEvent[];
-}[] = [
+export const CELEBRATION_DATES: CelebrationDay[] = [
   {
-    date: "24/02/2027",
+    dayNum: "Day 01",
     dayName: "Wednesday",
+    dateNum: "24",
+    month: "February",
+    year: "2027",
     fullDate: "Wednesday, 24 February 2027",
-    events: [
-      {
-        title: "Haldi + Carnival",
-        description: "Colours, music & poolside chaos.",
-        icon: "haldi",
-      },
-      {
-        title: "Sangeet Night",
-        description: "Music, moves & a little friendly competition.",
-        icon: "sangeet",
-      },
-    ],
   },
   {
-    date: "25/02/2027",
+    dayNum: "Day 02",
     dayName: "Thursday",
+    dateNum: "25",
+    month: "February",
+    year: "2027",
     fullDate: "Thursday, 25 February 2027",
-    events: [
-      {
-        title: "Wedding & Reception",
-        description: "Baraat. Pheras. Dinner. And the beginning of forever.",
-        icon: "wedding",
-      },
-    ],
   },
 ];
+
+export const EVENTS_NOTE =
+  "Detailed schedule of ceremonies, celebrations and timings will be shared closer to the dates.";
+
 
 export const VENUE = {
   name: "Prabhu Farms & Resort",

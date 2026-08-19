@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { CELEBRATIONS } from "@/lib/wedding";
 import { CornerFlourishes, Divider } from "./Ornaments";
 
 const rise = {
@@ -19,47 +18,53 @@ export function CelebrationsSection() {
         <Divider className="mt-4" />
       </header>
 
-      <div className="relative mt-8 sm:mt-12 space-y-8 sm:space-y-10">
-        {CELEBRATIONS.map((dayGroup) => (
-          <motion.article
-            key={dayGroup.date}
-            {...rise}
-            className="paper inner-frame grain relative rounded-3xl p-6 sm:p-10 shadow-lift"
-          >
-            <CornerFlourishes />
+      <motion.article
+        {...rise}
+        className="paper inner-frame grain relative mt-8 sm:mt-12 rounded-3xl px-5 py-8 sm:px-10 sm:py-12 shadow-lift text-center"
+      >
+        <CornerFlourishes />
 
-            {/* Date Header Banner */}
-            <div className="flex flex-col items-center text-center border-b border-gold/30 pb-5">
-              <span className="text-[0.62rem] sm:text-[0.68rem] uppercase tracking-[0.32em] text-gold-deep font-semibold">
-                {dayGroup.dayName}
-              </span>
-              <h3 className="font-display mt-1 text-xl sm:text-2xl font-medium tracking-tight text-burgundy">
-                {dayGroup.fullDate.replace(`${dayGroup.dayName}, `, "")}
-              </h3>
-            </div>
+        {/* Minimal Subtitle */}
+        <p className="font-display italic text-base sm:text-lg text-gold-deep mb-6 sm:mb-8">
+          Two days of love, celebration, and togetherness.
+        </p>
 
-            {/* Editorial Events List */}
-            <div className="mt-6 space-y-6 sm:space-y-8 divide-y divide-gold/15">
-              {dayGroup.events.map((event, idx) => (
-                <div
-                  key={event.title}
-                  className={`flex flex-col text-left ${idx > 0 ? "pt-6 sm:pt-8" : ""}`}
-                >
-                  <div className="flex items-baseline justify-between gap-4">
-                    <h4 className="font-creative text-lg sm:text-xl font-semibold tracking-wide text-burgundy">
-                      {event.title}
-                    </h4>
-                  </div>
+        {/* Two Celebration Days */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-4 items-center">
+          {/* Day 01 */}
+          <div className="flex flex-col items-center text-center px-2">
+            <span className="text-[0.62rem] sm:text-[0.68rem] uppercase tracking-[0.28em] text-gold-deep font-semibold">
+              Day 01 &middot; Wednesday
+            </span>
+            <h3 className="font-display text-xl sm:text-2xl font-medium tracking-tight text-burgundy mt-1.5">
+              24 February 2027
+            </h3>
+            <span className="text-[0.65rem] uppercase tracking-[0.22em] text-warmgrey font-medium mt-1">
+              Rajkot &middot; Gujarat
+            </span>
+          </div>
 
-                  <p className="mt-1.5 text-[0.85rem] sm:text-[0.92rem] leading-relaxed text-warmgrey">
-                    {event.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </motion.article>
-        ))}
-      </div>
+          {/* Day 02 */}
+          <div className="flex flex-col items-center text-center px-2 sm:border-l sm:border-gold/35">
+            <span className="text-[0.62rem] sm:text-[0.68rem] uppercase tracking-[0.28em] text-gold-deep font-semibold">
+              Day 02 &middot; Thursday
+            </span>
+            <h3 className="font-display text-xl sm:text-2xl font-medium tracking-tight text-burgundy mt-1.5">
+              25 February 2027
+            </h3>
+            <span className="text-[0.65rem] uppercase tracking-[0.22em] text-warmgrey font-medium mt-1">
+              Rajkot &middot; Gujarat
+            </span>
+          </div>
+        </div>
+
+        <Divider className="my-6 sm:my-8" />
+
+        {/* Clean Editorial Note */}
+        <p className="font-display italic text-sm sm:text-base text-warmgrey/90 max-w-sm sm:max-w-md mx-auto leading-relaxed">
+          Detailed schedule of ceremonies, celebrations and timings will be shared closer to the dates.
+        </p>
+      </motion.article>
     </section>
   );
 }
