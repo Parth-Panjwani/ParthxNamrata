@@ -9,7 +9,6 @@ import { submitRsvp, updateRsvp, checkRsvpExists } from "@/lib/rsvp.functions";
 import {
   ATTENDANCE_OPTIONS,
   DAY_OPTIONS,
-  TRAVEL_MODES,
   attendanceLabel,
   daysLabel,
 } from "@/lib/wedding";
@@ -29,9 +28,6 @@ const formSchema = z.object({
   adults: z.coerce.number().int().min(0).max(50),
   children: z.coerce.number().int().min(0).max(50),
   attendingDays: z.enum(["24", "25", "both"]),
-  travelCity: z.string().trim().max(120).optional(),
-  travelMode: z.string().trim().max(40).optional(),
-  arrivalDate: z.string().trim().max(20).optional(),
   message: z.string().trim().max(1000).optional(),
 });
 
@@ -40,7 +36,7 @@ type Saved = { id: string; values: z.output<typeof formSchema> };
 
 const EASE = [0.22, 0.61, 0.24, 1] as const;
 
-const labelClass = "block text-[0.6rem] uppercase tracking-[0.24em] text-gold-deep font-semibold whitespace-nowrap";
+const labelClass = "block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold";
 const fieldClass =
   "mt-1.5 w-full rounded-xl border border-gold/45 bg-ivory/90 px-4 py-3 font-sans text-[0.88rem] text-charcoal outline-none transition-all duration-200 placeholder:text-warmgrey/50 shadow-sm focus:border-gold focus:bg-ivory focus:ring-2 focus:ring-gold/30";
 
@@ -72,9 +68,6 @@ export function RsvpSection() {
       adults: 2,
       children: 0,
       attendingDays: "both",
-      travelCity: "",
-      travelMode: "",
-      arrivalDate: "",
       message: "",
     },
   });
@@ -114,9 +107,6 @@ export function RsvpSection() {
       adults: 2,
       children: 0,
       attendingDays: "both",
-      travelCity: "",
-      travelMode: "",
-      arrivalDate: "",
       message: "",
     });
   }
@@ -214,8 +204,6 @@ export function RsvpSection() {
                   ["Attendance", attendanceLabel(saved.values.attendance)],
                   ["Celebration Days", daysLabel(saved.values.attendingDays)],
                   ["Guests", `${saved.values.adults} Adults${saved.values.children ? `, ${saved.values.children} Children` : ""}`],
-                  ...(saved.values.travelCity ? [["Travelling From", saved.values.travelCity]] : []),
-                  ...(saved.values.travelMode ? [["Travel Mode", saved.values.travelMode]] : []),
                 ].map(([k, v]) => (
                   <div key={k} className="flex items-center justify-between gap-4 px-4 py-2.5">
                     <dt className="text-[0.58rem] uppercase tracking-[0.2em] text-gold-deep font-semibold whitespace-nowrap">{k}</dt>
@@ -313,85 +301,59 @@ export function RsvpSection() {
               </div>
             </fieldset>
 
-            <div className="grid grid-cols-2 gap-2.5">
-              <div>
-                <label className={labelClass} htmlFor="adults">
-                  Adults
-                </label>
-                <input
-                  id="adults"
-                  type="number"
-                  min={0}
-                  max={50}
-                  className={fieldClass}
-                  {...register("adults")}
-                />
-                <FieldError message={errors.adults?.message} />
-              </div>
-              <div>
-                <label className={labelClass} htmlFor="children">
-                  Children
-                </label>
-                <input
-                  id="children"
-                  type="number"
-                  min={0}
-                  max={50}
-                  className={fieldClass}
-                  {...register("children")}
-                />
-                <FieldError message={errors.children?.message} />
-              </div>
-            </div>
-
-            <fieldset>
-              <legend className={labelClass}>Attending Days</legend>
-              <div className="mt-2 grid grid-cols-3 gap-1.5">
-                {DAY_OPTIONS.map((option) => (
-                  <label
-                    key={option.value}
-                    className="cursor-pointer rounded-xl border border-gold/40 bg-ivory/90 px-1 py-2.5 text-center text-[0.72rem] font-medium text-charcoal transition-all duration-200 shadow-sm hover:border-gold/80 hover:bg-ivory-deep/60 has-checked:border-[#E5C158] has-checked:bg-gradient-to-r has-checked:from-[#8B1A2D] has-checked:via-[#671224] has-checked:to-[#480A17] has-checked:text-ivory has-checked:shadow-sm"
-                  >
-                    <input
-                      type="radio"
-                      value={option.value}
-                      className="sr-only"
-                      {...register("attendingDays")}
-                    />
-                    <span className="whitespace-nowrap">{option.label}</span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-
             {coming && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <div>
-                  <label className={labelClass} htmlFor="travelCity">
-                    City Travelling From (Optional)
-                  </label>
-                  <input
-                    id="travelCity"
-                    className={fieldClass}
-                    placeholder="e.g. Mumbai, Ahmedabad"
-                    {...register("travelCity")}
-                  />
+              <>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div>
+                    <label className={labelClass} htmlFor="adults">
+                      Adults
+                    </label>
+                    <input
+                      id="adults"
+                      type="number"
+                      min={0}
+                      max={50}
+                      className={fieldClass}
+                      {...register("adults")}
+                    />
+                    <FieldError message={errors.adults?.message} />
+                  </div>
+                  <div>
+                    <label className={labelClass} htmlFor="children">
+                      Children
+                    </label>
+                    <input
+                      id="children"
+                      type="number"
+                      min={0}
+                      max={50}
+                      className={fieldClass}
+                      {...register("children")}
+                    />
+                    <FieldError message={errors.children?.message} />
+                  </div>
                 </div>
 
-                <div>
-                  <label className={labelClass} htmlFor="travelMode">
-                    Mode of Travel (Optional)
-                  </label>
-                  <select id="travelMode" className={fieldClass} {...register("travelMode")}>
-                    <option value="">Select Mode</option>
-                    {TRAVEL_MODES.map((mode) => (
-                      <option key={mode} value={mode}>
-                        {mode}
-                      </option>
+                <fieldset>
+                  <legend className={labelClass}>Attending Days</legend>
+                  <div className="mt-2 grid grid-cols-3 gap-1.5">
+                    {DAY_OPTIONS.map((option) => (
+                      <label
+                        key={option.value}
+                        className="cursor-pointer rounded-xl border border-gold/40 bg-ivory/90 px-1 py-2.5 text-center text-[0.72rem] font-medium text-charcoal transition-all duration-200 shadow-sm hover:border-gold/80 hover:bg-ivory-deep/60 has-checked:border-[#E5C158] has-checked:bg-gradient-to-r has-checked:from-[#8B1A2D] has-checked:via-[#671224] has-checked:to-[#480A17] has-checked:text-ivory has-checked:shadow-sm"
+                      >
+                        <input
+                          type="radio"
+                          value={option.value}
+                          className="sr-only"
+                          {...register("attendingDays")}
+                        />
+                        <span className="whitespace-nowrap">{option.label}</span>
+                      </label>
                     ))}
-                  </select>
-                </div>
-              </div>
+                  </div>
+                </fieldset>
+              </>
             )}
 
             <div>
@@ -402,7 +364,7 @@ export function RsvpSection() {
                 id="message"
                 rows={3}
                 className={`${fieldClass} resize-none`}
-                placeholder="A warm wish or message…"
+                placeholder="A warm wish or blessing…"
                 {...register("message")}
               />
               <FieldError message={errors.message?.message} />
