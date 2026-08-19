@@ -32,20 +32,20 @@ export function CelebrationsSection() {
         <Divider className="mt-4" />
       </header>
 
-      {/* Day Tabs */}
+      {/* Date Tabs (24/02/2027 & 25/02/2027) */}
       <div
         className="mx-auto mt-6 max-w-xs rounded-2xl border border-gold/40 bg-ivory-deep/80 p-1 shadow-sm"
         role="tablist"
-        aria-label="Celebration days"
+        aria-label="Celebration dates"
       >
         <div className="grid grid-cols-2 gap-1">
           {CELEBRATIONS.map((d, i) => (
             <button
-              key={d.day}
+              key={d.date}
               role="tab"
               aria-selected={active === i}
               onClick={() => setActive(i)}
-              className={`relative rounded-xl py-2.5 text-[0.65rem] uppercase tracking-[0.2em] font-medium transition-all duration-300 whitespace-nowrap ${
+              className={`relative rounded-xl py-2.5 text-[0.7rem] uppercase tracking-[0.16em] font-medium transition-all duration-300 whitespace-nowrap ${
                 active === i ? "text-ivory shadow-md" : "text-warmgrey hover:text-burgundy"
               }`}
             >
@@ -56,21 +56,21 @@ export function CelebrationsSection() {
                   transition={{ duration: 0.35, ease: [0.22, 0.61, 0.24, 1] }}
                 />
               )}
-              <span className="relative z-10 font-semibold">{d.day} &middot; {d.label.slice(0, 3)}</span>
+              <span className="relative z-10 font-semibold">{d.date}</span>
             </button>
           ))}
         </div>
       </div>
 
       <p className="mt-3 text-center text-[0.65rem] uppercase tracking-[0.24em] text-gold-deep font-medium whitespace-nowrap">
-        {day.date}
+        {day.fullDate}
       </p>
 
-      {/* Events List without Timings */}
+      {/* Events List */}
       <div className="relative mt-6 space-y-3">
         <AnimatePresence mode="wait">
           <motion.div
-            key={day.day}
+            key={day.date}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
@@ -81,7 +81,7 @@ export function CelebrationsSection() {
               const Icon = ICONS[event.icon];
               return (
                 <article
-                  key={`${day.day}-${event.title}`}
+                  key={`${day.date}-${event.title}`}
                   className="paper inner-frame grain relative overflow-hidden rounded-2xl p-4 sm:p-5 shadow-paper"
                 >
                   <div className="flex items-center gap-3.5">

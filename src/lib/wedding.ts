@@ -18,15 +18,20 @@ export type CelebrationEvent = {
   icon: "haldi" | "sangeet" | "wedding" | "reception";
 };
 
-export const CELEBRATIONS: { day: string; label: string; date: string; events: CelebrationEvent[] }[] = [
+export const CELEBRATIONS: {
+  date: string;
+  dayName: string;
+  fullDate: string;
+  events: CelebrationEvent[];
+}[] = [
   {
-    day: "Day 1",
-    label: "Wednesday",
-    date: "24 February 2027",
+    date: "24/02/2027",
+    dayName: "Wednesday",
+    fullDate: "Wednesday, 24 February 2027",
     events: [
       {
         title: "Haldi + Carnival",
-        description: "Turmeric, music, pool party and festive celebrations.",
+        description: "Turmeric, music, pool party and festive joy.",
         icon: "haldi",
       },
       {
@@ -37,19 +42,14 @@ export const CELEBRATIONS: { day: string; label: string; date: string; events: C
     ],
   },
   {
-    day: "Day 2",
-    label: "Thursday",
-    date: "25 February 2027",
+    date: "25/02/2027",
+    dayName: "Thursday",
+    fullDate: "Thursday, 25 February 2027",
     events: [
       {
-        title: "Baraat & Wedding",
-        description: "Royal procession followed by sacred vows & pheras.",
+        title: "Wedding & Reception",
+        description: "Baraat procession, sacred pheras & blessings followed by royal dinner & celebrations.",
         icon: "wedding",
-      },
-      {
-        title: "Reception & Dinner",
-        description: "Celebration with the newlyweds followed by royal dinner.",
-        icon: "reception",
       },
     ],
   },
@@ -75,8 +75,8 @@ export const ATTENDANCE_OPTIONS = [
 
 export const DAY_OPTIONS = [
   { value: "both", label: "Both Days" },
-  { value: "24", label: "24 Feb Only" },
-  { value: "25", label: "25 Feb Only" },
+  { value: "24", label: "24/02/2027" },
+  { value: "25", label: "25/02/2027" },
 ] as const;
 
 export const TRAVEL_MODES = ["Flight", "Train", "Car", "Bus", "Other"] as const;

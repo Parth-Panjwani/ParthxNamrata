@@ -10,9 +10,9 @@ import { VenueSection } from "@/components/invite/VenueSection";
 import { Divider, Monogram, PetalField } from "@/components/invite/Ornaments";
 import { COUPLE, WEDDING_DATE_LABEL } from "@/lib/wedding";
 
-const TITLE = "Parth & Namrata — 24 & 25 February 2027, Rajkot";
+const TITLE = "Parth & Namrata — Wedding Celebrations, Rajkot";
 const DESCRIPTION =
-  "A handcrafted invitation to the wedding of Parth & Namrata. Two days of celebrations in Rajkot on 24 & 25 February 2027 — celebrations, venue details and RSVP.";
+  "Save the date and event itinerary for the wedding of Parth & Namrata in Rajkot — celebrations, venue details and RSVP.";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -63,7 +63,7 @@ function InvitationExperience() {
               onClick={open}
               className="btn-3d-secondary absolute right-4 top-4 z-10 !px-4 !py-2 text-[0.58rem]"
             >
-              Skip Invitation
+              Skip to Reveal
             </button>
 
             <motion.div
@@ -73,20 +73,24 @@ function InvitationExperience() {
               transition={{ duration: 1.1, ease: EASE }}
             >
               <div className="relative p-2.5 sm:p-3.5 rounded-full border border-gold/50 bg-gradient-to-b from-gold/15 via-ivory to-transparent shadow-[0_0_30px_rgba(212,175,55,0.25)]">
-                <Monogram size={120} />
+                <Monogram size={110} />
               </div>
-              <p className="eyebrow mt-5 text-[0.62rem] tracking-[0.35em] text-gold-deep font-semibold">
-                Save The Date
+
+              <p className="eyebrow mt-4 text-[0.6rem] tracking-[0.3em] text-gold-deep font-semibold">
+                Together With Our Families
               </p>
+
               <h1 className="font-creative mt-2 text-center text-3xl font-semibold tracking-wide text-burgundy sm:text-4xl">
                 Parth &amp; Namrata
               </h1>
-              <p className="mt-2 text-[0.62rem] uppercase tracking-[0.25em] text-warmgrey">
-                24 &amp; 25 February 2027 &middot; Rajkot
-              </p>
-              <Divider className="mt-5" />
 
-              <div className="mt-8 w-full">
+              <p className="mt-1.5 text-[0.62rem] uppercase tracking-[0.22em] text-warmgrey font-medium">
+                Wedding Celebrations &middot; Rajkot
+              </p>
+
+              <Divider className="mt-4" />
+
+              <div className="mt-7 w-full">
                 <Envelope onOpened={open} />
               </div>
             </motion.div>

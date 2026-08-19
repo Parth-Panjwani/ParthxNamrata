@@ -164,7 +164,7 @@ export function Envelope({ onOpened }: { onOpened: () => void }) {
             type="button"
             onClick={() => stage === "idle" && setStage("glow")}
             disabled={stage !== "idle"}
-            aria-label="Break the seal and open the invitation"
+            aria-label="Break the seal and reveal dates"
             className="relative grid h-14 w-14 place-items-center rounded-full disabled:cursor-default"
             style={{
               background:
@@ -198,20 +198,20 @@ export function Envelope({ onOpened }: { onOpened: () => void }) {
 
       {/* ── Caption + Action Button ── */}
       <motion.div
-        className="mt-9 flex flex-col items-center gap-4"
+        className="mt-8 flex flex-col items-center gap-3.5"
         animate={{ opacity: stage === "idle" || stage === "glow" ? 1 : 0 }}
         transition={{ duration: 0.5, ease: EASE }}
       >
-        <p className="font-display text-base italic font-normal text-warmgrey">
-          A Special Invitation Awaits You
+        <p className="font-display text-sm sm:text-base italic font-normal text-warmgrey">
+          Tap the seal to reveal the dates &amp; celebrations
         </p>
         <button
           type="button"
           onClick={() => stage === "idle" && setStage("glow")}
           disabled={stage !== "idle"}
-          className="btn-3d-primary group !px-10 !py-4 text-[0.72rem] disabled:cursor-default"
+          className="btn-3d-primary group !px-9 !py-3.5 text-[0.7rem] tracking-[0.2em] whitespace-nowrap disabled:cursor-default"
         >
-          <span className="relative z-10">Tap To Open</span>
+          <span className="relative z-10 whitespace-nowrap">Tap To Reveal</span>
           <span
             aria-hidden="true"
             className="absolute inset-y-0 -left-full w-1/2 bg-gradient-to-r from-transparent via-gold-light/45 to-transparent transition-transform duration-700 group-hover:translate-x-[300%]"
