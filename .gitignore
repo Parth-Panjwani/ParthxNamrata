@@ -19,6 +19,9 @@
 
 # production
 /build
+/.output/
+/.wrangler/
+/.tanstack/
 
 # misc
 .DS_Store
