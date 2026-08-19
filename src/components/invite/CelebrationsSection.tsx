@@ -1,107 +1,64 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Sun,
-  Music,
-  HeartHandshake,
-  Sparkles,
-} from "lucide-react";
-import { CELEBRATIONS, type CelebrationEvent } from "@/lib/wedding";
-import { Divider } from "./Ornaments";
+import { motion } from "framer-motion";
+import { CELEBRATIONS } from "@/lib/wedding";
+import { CornerFlourishes, Divider } from "./Ornaments";
 
-const ICONS: Record<CelebrationEvent["icon"], typeof Sun> = {
-  haldi: Sun,
-  sangeet: Music,
-  wedding: HeartHandshake,
-  reception: Sparkles,
+const rise = {
+  initial: { opacity: 0, y: 16 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: "-40px" },
+  transition: { duration: 0.8, ease: [0.22, 0.61, 0.24, 1] as const },
 };
 
 export function CelebrationsSection() {
-  const [active, setActive] = useState(0);
-  const day = CELEBRATIONS[active] ?? CELEBRATIONS[0]!;
-
   return (
-    <section id="celebrations" className="canvas relative pb-16">
+    <section id="the-plan" className="canvas relative pb-16 sm:pb-24">
       <header className="flex flex-col items-center text-center">
-        <p className="eyebrow text-[0.62rem] tracking-[0.3em] text-gold-deep font-semibold whitespace-nowrap">
-          Itinerary
-        </p>
-        <h2 className="font-creative mt-1.5 text-2xl font-semibold text-burgundy sm:text-3xl whitespace-nowrap">
-          Flow of Events
+        <h2 className="font-creative text-2xl font-semibold tracking-widest text-burgundy sm:text-3xl uppercase">
+          The Plan
         </h2>
         <Divider className="mt-4" />
       </header>
 
-      {/* Date Tabs (24/02/2027 & 25/02/2027) */}
-      <div
-        className="mx-auto mt-6 max-w-xs rounded-2xl border border-gold/40 bg-ivory-deep/80 p-1 shadow-sm"
-        role="tablist"
-        aria-label="Celebration dates"
-      >
-        <div className="grid grid-cols-2 gap-1">
-          {CELEBRATIONS.map((d, i) => (
-            <button
-              key={d.date}
-              role="tab"
-              aria-selected={active === i}
-              onClick={() => setActive(i)}
-              className={`relative rounded-xl py-2.5 text-[0.7rem] uppercase tracking-[0.16em] font-medium transition-all duration-300 whitespace-nowrap ${
-                active === i ? "text-ivory shadow-md" : "text-warmgrey hover:text-burgundy"
-              }`}
-            >
-              {active === i && (
-                <motion.span
-                  layoutId="activeDayTab"
-                  className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#8B1A2D] via-[#671224] to-[#480A17]"
-                  transition={{ duration: 0.35, ease: [0.22, 0.61, 0.24, 1] }}
-                />
-              )}
-              <span className="relative z-10 font-semibold">{d.date}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <p className="mt-3 text-center text-[0.65rem] uppercase tracking-[0.24em] text-gold-deep font-medium whitespace-nowrap">
-        {day.fullDate}
-      </p>
-
-      {/* Events List */}
-      <div className="relative mt-6 space-y-3">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={day.date}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.35, ease: [0.22, 0.61, 0.24, 1] }}
-            className="space-y-3"
+      <div className="relative mt-8 sm:mt-12 space-y-8 sm:space-y-10">
+        {CELEBRATIONS.map((dayGroup) => (
+          <motion.article
+            key={dayGroup.date}
+            {...rise}
+            className="paper inner-frame grain relative rounded-3xl p-6 sm:p-10 shadow-lift"
           >
-            {day.events.map((event) => {
-              const Icon = ICONS[event.icon];
-              return (
-                <article
-                  key={`${day.date}-${event.title}`}
-                  className="paper inner-frame grain relative overflow-hidden rounded-2xl p-4 sm:p-5 shadow-paper"
+            <CornerFlourishes />
+
+            {/* Date Header Banner */}
+            <div className="flex flex-col items-center text-center border-b border-gold/30 pb-5">
+              <span className="text-[0.62rem] sm:text-[0.68rem] uppercase tracking-[0.32em] text-gold-deep font-semibold">
+                {dayGroup.dayName}
+              </span>
+              <h3 className="font-display mt-1 text-xl sm:text-2xl font-medium tracking-tight text-burgundy">
+                {dayGroup.fullDate.replace(`${dayGroup.dayName}, `, "")}
+              </h3>
+            </div>
+
+            {/* Editorial Events List */}
+            <div className="mt-6 space-y-6 sm:space-y-8 divide-y divide-gold/15">
+              {dayGroup.events.map((event, idx) => (
+                <div
+                  key={event.title}
+                  className={`flex flex-col text-left ${idx > 0 ? "pt-6 sm:pt-8" : ""}`}
                 >
-                  <div className="flex items-center gap-3.5">
-                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-gold/50 bg-gradient-to-br from-gold/20 via-ivory to-ivory-deep text-gold-deep shadow-sm">
-                      <Icon size={18} strokeWidth={1.5} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="font-creative text-lg font-semibold text-burgundy sm:text-xl whitespace-nowrap overflow-hidden text-ellipsis">
-                        {event.title}
-                      </h3>
-                      <p className="mt-0.5 text-[0.82rem] leading-snug text-warmgrey">
-                        {event.description}
-                      </p>
-                    </div>
+                  <div className="flex items-baseline justify-between gap-4">
+                    <h4 className="font-creative text-lg sm:text-xl font-semibold tracking-wide text-burgundy">
+                      {event.title}
+                    </h4>
                   </div>
-                </article>
-              );
-            })}
-          </motion.div>
-        </AnimatePresence>
+
+                  <p className="mt-1.5 text-[0.85rem] sm:text-[0.92rem] leading-relaxed text-warmgrey">
+                    {event.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </motion.article>
+        ))}
       </div>
     </section>
   );

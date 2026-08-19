@@ -7,8 +7,7 @@ import { CelebrationsSection } from "@/components/invite/CelebrationsSection";
 import { InvitationSection } from "@/components/invite/InvitationSection";
 import { RsvpSection } from "@/components/invite/RsvpSection";
 import { VenueSection } from "@/components/invite/VenueSection";
-import { Divider, Monogram, PetalField } from "@/components/invite/Ornaments";
-import { COUPLE, WEDDING_DATE_LABEL } from "@/lib/wedding";
+import { CornerFlourishes, Divider, Monogram, PetalField } from "@/components/invite/Ornaments";
 
 const TITLE = "Parth & Namrata — Wedding Celebrations, Rajkot";
 const DESCRIPTION =
@@ -56,41 +55,46 @@ function InvitationExperience() {
             key="envelope"
             className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background px-5 py-8"
             exit={{ opacity: 0, filter: "blur(6px)" }}
-            transition={{ duration: 0.9, ease: EASE }}
+            transition={{ duration: 0.8, ease: EASE }}
           >
             <button
               type="button"
               onClick={open}
-              className="btn-3d-secondary absolute right-4 top-4 z-10 !px-4 !py-2 text-[0.58rem]"
+              className="btn-3d-secondary absolute right-4 top-4 z-10 !px-4 !py-2 text-[0.58rem] tracking-[0.2em]"
             >
-              Skip to Reveal
+              Skip
             </button>
 
             <motion.div
-              className="flex w-full flex-col items-center"
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1.1, ease: EASE }}
+              className="paper inner-frame grain relative mx-auto flex w-full max-w-[440px] flex-col items-center px-5 py-7 sm:px-8 sm:py-8 rounded-3xl shadow-lift text-center"
+              initial={{ opacity: 0, scale: 0.96, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: EASE }}
             >
-              <div className="relative p-2.5 sm:p-3.5 rounded-full border border-gold/50 bg-gradient-to-b from-gold/15 via-ivory to-transparent shadow-[0_0_30px_rgba(212,175,55,0.25)]">
-                <Monogram size={110} />
+              <CornerFlourishes />
+
+              {/* Monogram Crest Medallion */}
+              <div className="relative p-2 rounded-full border border-gold/45 bg-gradient-to-b from-gold/20 via-ivory to-ivory-deep shadow-[0_0_24px_rgba(212,175,55,0.22)]">
+                <Monogram size={78} />
               </div>
 
-              <p className="eyebrow mt-4 text-[0.6rem] tracking-[0.3em] text-gold-deep font-semibold">
-                Together With Our Families
-              </p>
-
-              <h1 className="font-creative mt-2 text-center text-3xl font-semibold tracking-wide text-burgundy sm:text-4xl">
+              {/* Names & Date */}
+              <h1 className="font-creative mt-3 text-2xl sm:text-3xl font-semibold tracking-wide text-burgundy">
                 Parth &amp; Namrata
               </h1>
 
-              <p className="mt-1.5 text-[0.62rem] uppercase tracking-[0.22em] text-warmgrey font-medium">
-                Wedding Celebrations &middot; Rajkot
-              </p>
+              <div className="mt-1.5 flex items-center justify-center gap-3">
+                <span className="h-px w-8 sm:w-12 bg-gradient-to-r from-transparent to-gold/70" />
+                <p className="text-[0.62rem] sm:text-[0.66rem] uppercase tracking-[0.28em] text-gold-deep font-semibold whitespace-nowrap">
+                  24 &mdash; 25 FEB 2027 &middot; RAJKOT
+                </p>
+                <span className="h-px w-8 sm:w-12 bg-gradient-to-l from-transparent to-gold/70" />
+              </div>
 
-              <Divider className="mt-4" />
+              <Divider className="my-4" />
 
-              <div className="mt-7 w-full">
+              {/* Centered Royal Envelope */}
+              <div className="w-full">
                 <Envelope onOpened={open} />
               </div>
             </motion.div>
@@ -101,17 +105,18 @@ function InvitationExperience() {
       <motion.div
         initial={false}
         animate={{ opacity: opened ? 1 : 0 }}
-        transition={{ duration: 1.1, ease: EASE, delay: opened ? 0.25 : 0 }}
+        transition={{ duration: 0.9, ease: EASE, delay: opened ? 0.2 : 0 }}
         className="relative z-10"
         aria-hidden={!opened}
       >
-        <InvitationSection onViewCelebrations={() => scrollTo("celebrations")} />
+        <InvitationSection />
         <CelebrationsSection />
         <VenueSection />
         <RsvpSection />
 
-        <footer className="relative border-t border-gold/25 pt-10 pb-16 text-center">
-          <div className="relative mx-auto w-full max-w-5xl px-4 py-4">
+        {/* Quiet Closing Scene */}
+        <footer className="relative border-t border-gold/20 pt-8 pb-16 text-center">
+          <div className="relative mx-auto w-full max-w-4xl px-4 py-2 opacity-85">
             <img
               src={palaceLine}
               alt="Palace Illustration"
@@ -119,25 +124,21 @@ function InvitationExperience() {
               loading="lazy"
               width={1920}
               height={640}
-              className="pointer-events-none mx-auto w-full max-w-5xl opacity-95 transition-all filter drop-shadow-[0_4px_16px_rgba(184,138,26,0.35)]"
+              className="pointer-events-none mx-auto w-full max-w-4xl opacity-90 transition-all filter drop-shadow-[0_4px_12px_rgba(184,138,26,0.25)]"
             />
           </div>
-          <div className="mt-2 flex flex-col items-center justify-center gap-0.5">
-            <p className="font-creative text-2xl tracking-wider text-burgundy sm:text-3xl font-normal">
-              {COUPLE.groom}
+
+          <div className="mt-4 flex flex-col items-center justify-center gap-1">
+            <p className="font-display italic text-lg sm:text-xl text-burgundy font-normal">
+              See you in Rajkot.
             </p>
-            <div className="flex items-center gap-3 my-1">
-              <span className="h-px w-10 bg-gradient-to-r from-transparent to-gold" />
-              <span className="font-script text-3xl italic text-gold-deep">&amp;</span>
-              <span className="h-px w-10 bg-gradient-to-l from-transparent to-gold" />
-            </div>
-            <p className="font-creative text-2xl tracking-wider text-burgundy sm:text-3xl font-normal">
-              {COUPLE.bride}
+            <p className="font-creative text-base sm:text-lg tracking-widest text-gold-deep font-semibold mt-1">
+              P &times; N
+            </p>
+            <p className="text-[0.6rem] uppercase tracking-[0.3em] text-warmgrey font-medium mt-0.5">
+              24 &mdash; 25 &middot; 02 &middot; 27
             </p>
           </div>
-          <p className="mt-3 text-[0.58rem] uppercase tracking-[0.3em] text-warmgrey">
-            {WEDDING_DATE_LABEL}
-          </p>
         </footer>
       </motion.div>
 
@@ -147,8 +148,8 @@ function InvitationExperience() {
           onClick={() => scrollTo("rsvp")}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: EASE, delay: 1 }}
-          className="btn-3d-primary fixed bottom-5 right-5 z-40 !px-6 !py-3.5 text-[0.65rem]"
+          transition={{ duration: 0.6, ease: EASE, delay: 0.8 }}
+          className="btn-3d-primary fixed bottom-5 right-5 z-40 !px-5 !py-3 text-[0.62rem] tracking-[0.2em] shadow-2xl"
         >
           RSVP
         </motion.button>

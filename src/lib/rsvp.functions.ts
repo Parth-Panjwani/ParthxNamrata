@@ -6,13 +6,15 @@ const rsvpSchema = z.object({
   mobile: z
     .string()
     .trim()
-    .min(7, "Please enter a valid mobile number")
     .max(20)
-    .regex(/^[0-9+\-\s()]+$/, "Only digits and + - ( ) are allowed"),
+    .regex(/^[0-9+\-\s()]*$/, "Only digits and + - ( ) are allowed")
+    .optional()
+    .or(z.literal(""))
+    .default(""),
   attendance: z.enum(["yes", "some", "unsure", "no"]),
-  adults: z.number().int().min(0).max(50),
-  children: z.number().int().min(0).max(50),
-  attendingDays: z.enum(["24", "25", "both"]),
+  adults: z.number().int().min(0).max(50).default(1),
+  children: z.number().int().min(0).max(50).default(0),
+  attendingDays: z.enum(["24", "25", "both"]).default("both"),
   travelCity: z.string().trim().max(120).optional().or(z.literal("")),
   travelMode: z.string().trim().max(40).optional().or(z.literal("")),
   arrivalDate: z.string().trim().max(20).optional().or(z.literal("")),
