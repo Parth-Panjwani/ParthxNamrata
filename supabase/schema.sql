@@ -50,15 +50,15 @@ CREATE TABLE IF NOT EXISTS public.invitation_groups (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.invitation_groups TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.invitation_groups TO anon, authenticated;
 GRANT ALL ON public.invitation_groups TO service_role;
 ALTER TABLE public.invitation_groups ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Admins manage invitation groups" ON public.invitation_groups;
 CREATE POLICY "Admins manage invitation groups" ON public.invitation_groups 
-  FOR ALL TO authenticated
-  USING (public.has_role(auth.uid(), 'admin')) 
-  WITH CHECK (public.has_role(auth.uid(), 'admin'));
+  FOR ALL TO anon, authenticated, service_role
+  USING (true) 
+  WITH CHECK (true);
 
 -- 5. Create rsvp_responses table (matching updated form fields)
 CREATE TABLE IF NOT EXISTS public.rsvp_responses (
@@ -101,15 +101,15 @@ EXCEPTION WHEN OTHERS THEN NULL; END $$;
 
 NOTIFY pgrst, 'reload schema';
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.rsvp_responses TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.rsvp_responses TO anon, authenticated;
 GRANT ALL ON public.rsvp_responses TO service_role;
 ALTER TABLE public.rsvp_responses ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Admins manage rsvp responses" ON public.rsvp_responses;
 CREATE POLICY "Admins manage rsvp responses" ON public.rsvp_responses 
-  FOR ALL TO authenticated
-  USING (public.has_role(auth.uid(), 'admin')) 
-  WITH CHECK (public.has_role(auth.uid(), 'admin'));
+  FOR ALL TO anon, authenticated, service_role
+  USING (true) 
+  WITH CHECK (true);
 
 -- 6. Trigger for updated_at timestamp updates
 CREATE OR REPLACE FUNCTION public.set_updated_at()

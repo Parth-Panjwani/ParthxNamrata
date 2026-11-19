@@ -122,10 +122,14 @@ export function PetalField() {
   return (
     <div
       className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
+      style={{ transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}
       aria-hidden="true"
     >
       {/* Soft Ambient Radiance in Background */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[90vw] max-w-4xl h-[450px] bg-[radial-gradient(ellipse_at_top,rgba(229,193,88,0.18)_0%,rgba(103,18,36,0.08)_50%,transparent_80%)] blur-3xl pointer-events-none" />
+      <div
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-[90vw] max-w-4xl h-[450px] bg-[radial-gradient(ellipse_at_top,rgba(229,193,88,0.18)_0%,rgba(103,18,36,0.08)_50%,transparent_80%)] blur-2xl pointer-events-none"
+        style={{ transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}
+      />
 
       {/* Floating Petals */}
       {PETALS.map((p, i) => (

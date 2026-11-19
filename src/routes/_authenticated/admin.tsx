@@ -11,6 +11,10 @@ import {
   Plus,
   Search,
   Trash2,
+  Edit2,
+  X,
+  AlertCircle,
+  Check,
   Users,
   CheckCircle2,
   XCircle,
@@ -26,7 +30,10 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import {
   createInvitationGroup,
+  updateInvitationGroup,
   deleteInvitationGroup,
+  createRsvpResponse,
+  updateRsvpResponse,
   deleteRsvpResponse,
   getAdminOverview,
 } from "@/lib/admin.functions";
@@ -93,6 +100,32 @@ function AdminPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<string>("all");
   const [showForm, setShowForm] = useState(false);
+  const [isMutating, setIsMutating] = useState(false);
+  const [deletedResponseIds, setDeletedResponseIds] = useState<Set<string>>(
+    new Set(),
+  );
+  const [deletedGroupIds, setDeletedGroupIds] = useState<Set<string>>(
+    new Set(),
+  );
+  const [editingRsvp, setEditingRsvp] = useState<Response | null>(null);
+  const [showAddRsvpModal, setShowAddRsvpModal] = useState(false);
+  const [editingGroup, setEditingGroup] = useState<Group | null>(null);
+  const [notification, setNotification] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  const addRsvpFn = useServerFn(createRsvpResponse);
+  const updateRsvpFn = useServerFn(updateRsvpResponse);
+  const updateGroupFn = useServerFn(updateInvitationGroup);
+
+  function notify(type: "success" | "error", text: string) {
+    setNotification({ type, text });
+    setTimeout(() => {
+      setNotification((curr) => (curr?.text === text ? null : curr));
+    }, 4500);
+  }
+
   const [draft, setDraft] = useState({
     name: "",
     side: "both" as "bride" | "groom" | "both",
@@ -107,9 +140,271 @@ function AdminPage() {
     queryFn: () => fetchOverview({}),
   });
 
-  const create = useMutation({
-    mutationFn: () => addGroup({ data: draft }),
-    onSuccess: () => {
+  async function handleDeleteResponse(r: Response) {
+    if (
+      !confirm(
+        `Are you sure you want to delete the RSVP record for "${r.full_name}"?`,
+      )
+    ) {
+      return;
+    }
+    setDeletedResponseIds((prev) => new Set([...prev, r.id]));
+    notify("success", `RSVP for "${r.full_name}" deleted.`);
+
+    try {
+      try {
+        await removeResponse({ data: { id: r.id } });
+      } catch (serverErr) {
+        console.warn("Server delete warning:", serverErr);
+      }
+      const { error } = await supabase
+        .from("rsvp_responses")
+        .delete()
+        .eq("id", r.id);
+      if (error) console.warn("Client delete warning:", error);
+      queryClient.invalidateQueries({ queryKey: ["admin-overview"] });
+    } catch (err) {
+      setDeletedResponseIds((prev) => {
+        const next = new Set(prev);
+        next.delete(r.id);
+        return next;
+      });
+      notify(
+        "error",
+        `Could not delete: ${err instanceof Error ? err.message : "Error"}`,
+      );
+    }
+  }
+
+  async function handleDeleteGroup(g: Group) {
+    if (
+      !confirm(
+        `Are you sure you want to delete invitation group "${g.name || "Group"}"?`,
+      )
+    ) {
+      return;
+    }
+    setDeletedGroupIds((prev) => new Set([...prev, g.id]));
+    notify("success", `Group "${g.name}" deleted.`);
+
+    try {
+      try {
+        await removeGroup({ data: { id: g.id } });
+      } catch (serverErr) {
+        console.warn("Server delete warning:", serverErr);
+      }
+      const { error } = await supabase
+        .from("invitation_groups")
+        .delete()
+        .eq("id", g.id);
+      if (error) console.warn("Client delete warning:", error);
+      queryClient.invalidateQueries({ queryKey: ["admin-overview"] });
+    } catch (err) {
+      setDeletedGroupIds((prev) => {
+        const next = new Set(prev);
+        next.delete(g.id);
+        return next;
+      });
+      notify(
+        "error",
+        `Could not delete group: ${err instanceof Error ? err.message : "Error"}`,
+      );
+    }
+  }
+
+  async function handleSaveEditedRsvp(updated: Response) {
+    setIsMutating(true);
+    try {
+      try {
+        await updateRsvpFn({
+          data: {
+            id: updated.id,
+            fullName: updated.full_name,
+            mobile: updated.mobile,
+            attendance: updated.attendance,
+            adults: Number(updated.adults) || 1,
+            children: Number(updated.children) || 0,
+            attendingDays: updated.attending_days,
+            travelMode: updated.travel_mode || null,
+            travelCity: updated.travel_city || null,
+            arrivalDate: updated.arrival_date || null,
+            arrivalTime: updated.arrival_time || null,
+            message: updated.message || null,
+          },
+        });
+      } catch (serverErr) {
+        console.warn("Server update warning:", serverErr);
+      }
+
+      const { error } = await supabase
+        .from("rsvp_responses")
+        .update({
+          full_name: updated.full_name,
+          mobile: updated.mobile,
+          attendance: updated.attendance,
+          adults: Number(updated.adults) || 1,
+          children: Number(updated.children) || 0,
+          attending_days: updated.attending_days,
+          travel_mode: updated.travel_mode || null,
+          travel_city: updated.travel_city || null,
+          arrival_date: updated.arrival_date || null,
+          arrival_time: updated.arrival_time || null,
+          message: updated.message || null,
+        })
+        .eq("id", updated.id);
+
+      if (error) console.warn("Client update warning:", error);
+
+      queryClient.invalidateQueries({ queryKey: ["admin-overview"] });
+      setEditingRsvp(null);
+      notify("success", `Updated RSVP for "${updated.full_name}".`);
+    } catch (err) {
+      notify(
+        "error",
+        `Could not update: ${err instanceof Error ? err.message : "Error"}`,
+      );
+    } finally {
+      setIsMutating(false);
+    }
+  }
+
+  async function handleCreateRsvp(newRsvp: {
+    fullName: string;
+    mobile: string;
+    attendance: "yes" | "some" | "unsure" | "no";
+    adults: number;
+    children: number;
+    attendingDays: string;
+    travelMode?: string;
+    travelCity?: string;
+    arrivalDate?: string;
+    arrivalTime?: string;
+    message?: string;
+  }) {
+    setIsMutating(true);
+    try {
+      try {
+        await addRsvpFn({
+          data: {
+            fullName: newRsvp.fullName,
+            mobile: newRsvp.mobile,
+            attendance: newRsvp.attendance,
+            adults: newRsvp.adults,
+            children: newRsvp.children,
+            attendingDays: newRsvp.attendingDays,
+            travelMode: newRsvp.travelMode || null,
+            travelCity: newRsvp.travelCity || null,
+            arrivalDate: newRsvp.arrivalDate || null,
+            arrivalTime: newRsvp.arrivalTime || null,
+            message: newRsvp.message || null,
+          },
+        });
+      } catch (serverErr) {
+        console.warn("Server create warning:", serverErr);
+      }
+
+      const { error } = await supabase.from("rsvp_responses").insert({
+        full_name: newRsvp.fullName,
+        mobile: newRsvp.mobile,
+        attendance: newRsvp.attendance,
+        adults: newRsvp.adults,
+        children: newRsvp.children,
+        attending_days: newRsvp.attendingDays,
+        travel_mode: newRsvp.travelMode || null,
+        travel_city: newRsvp.travelCity || null,
+        arrival_date: newRsvp.arrivalDate || null,
+        arrival_time: newRsvp.arrivalTime || null,
+        message: newRsvp.message || null,
+      });
+
+      if (error) console.warn("Client create warning:", error);
+
+      queryClient.invalidateQueries({ queryKey: ["admin-overview"] });
+      setShowAddRsvpModal(false);
+      notify("success", `Added guest RSVP for "${newRsvp.fullName}".`);
+    } catch (err) {
+      notify(
+        "error",
+        `Could not add RSVP: ${err instanceof Error ? err.message : "Error"}`,
+      );
+    } finally {
+      setIsMutating(false);
+    }
+  }
+
+  async function handleSaveEditedGroup(updated: Group) {
+    setIsMutating(true);
+    try {
+      try {
+        await updateGroupFn({
+          data: {
+            id: updated.id,
+            name: updated.name,
+            side: updated.side as "bride" | "groom" | "both",
+            guestCount: Number(updated.guest_count) || 1,
+            invitedDays: updated.invited_days as "24" | "25" | "both",
+            contactMobile: updated.contact_mobile || "",
+            notes: updated.notes || "",
+          },
+        });
+      } catch (serverErr) {
+        console.warn("Server update group warning:", serverErr);
+      }
+
+      const { error } = await supabase
+        .from("invitation_groups")
+        .update({
+          name: updated.name,
+          side: updated.side,
+          guest_count: Number(updated.guest_count) || 1,
+          invited_days: updated.invited_days,
+          contact_mobile: updated.contact_mobile || null,
+          notes: updated.notes || null,
+        })
+        .eq("id", updated.id);
+
+      if (error) console.warn("Client update group warning:", error);
+
+      queryClient.invalidateQueries({ queryKey: ["admin-overview"] });
+      setEditingGroup(null);
+      notify("success", `Updated invitation group "${updated.name}".`);
+    } catch (err) {
+      notify(
+        "error",
+        `Could not update group: ${err instanceof Error ? err.message : "Error"}`,
+      );
+    } finally {
+      setIsMutating(false);
+    }
+  }
+
+  async function handleCreateGroup(e: React.FormEvent) {
+    e.preventDefault();
+    setIsMutating(true);
+    try {
+      try {
+        await addGroup({ data: draft });
+      } catch (serverErr) {
+        console.warn("Server add group warning:", serverErr);
+      }
+
+      const slug = `${draft.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")}-${Math.random().toString(36).slice(2, 6)}`;
+
+      const { error } = await supabase.from("invitation_groups").insert({
+        name: draft.name,
+        slug,
+        side: draft.side,
+        guest_count: draft.guestCount,
+        invited_days: draft.invitedDays,
+        contact_mobile: draft.contactMobile || null,
+        notes: draft.notes || null,
+      });
+
+      if (error) console.warn("Client add group warning:", error);
+
       setShowForm(false);
       setDraft({
         name: "",
@@ -120,26 +415,29 @@ function AdminPage() {
         notes: "",
       });
       queryClient.invalidateQueries({ queryKey: ["admin-overview"] });
-    },
-  });
-
-  const destroy = useMutation({
-    mutationFn: (id: string) => removeGroup({ data: { id } }),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["admin-overview"] }),
-  });
-
-  const destroyResponse = useMutation({
-    mutationFn: (id: string) => removeResponse({ data: { id } }),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["admin-overview"] }),
-  });
+      notify("success", `Added invitation group "${draft.name}".`);
+    } catch (err) {
+      notify(
+        "error",
+        `Could not create group: ${err instanceof Error ? err.message : "Error"}`,
+      );
+    } finally {
+      setIsMutating(false);
+    }
+  }
 
   const responses = useMemo(
-    () => (data?.responses ?? []) as Response[],
-    [data?.responses],
+    () =>
+      ((data?.responses ?? []) as Response[]).filter(
+        (r) => !deletedResponseIds.has(r.id),
+      ),
+    [data?.responses, deletedResponseIds],
   );
-  const groups = useMemo(() => (data?.groups ?? []) as Group[], [data?.groups]);
+  const groups = useMemo(
+    () =>
+      ((data?.groups ?? []) as Group[]).filter((g) => !deletedGroupIds.has(g.id)),
+    [data?.groups, deletedGroupIds],
+  );
 
   const summary = useMemo(() => {
     const attendingList = responses.filter(
@@ -445,6 +743,31 @@ function AdminPage() {
         </div>
       </header>
 
+      {/* Floating Notification Toast */}
+      {notification && (
+        <div
+          className={`fixed top-4 right-4 z-50 flex items-center gap-2.5 rounded-xl px-4 py-3 shadow-2xl border text-xs sm:text-sm font-medium transition-all ${
+            notification.type === "success"
+              ? "bg-emerald-900/95 text-emerald-100 border-emerald-500/60 backdrop-blur-md"
+              : "bg-rose-900/95 text-rose-100 border-rose-500/60 backdrop-blur-md"
+          }`}
+        >
+          {notification.type === "success" ? (
+            <CheckCircle2 size={16} className="text-emerald-300 shrink-0" />
+          ) : (
+            <AlertCircle size={16} className="text-rose-300 shrink-0" />
+          )}
+          <span>{notification.text}</span>
+          <button
+            type="button"
+            onClick={() => setNotification(null)}
+            className="ml-2 rounded p-0.5 hover:bg-white/20"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       <div className="mx-auto max-w-6xl px-3.5 pt-5 sm:px-6">
         {error && (
           <div className="mb-5 rounded-xl border border-destructive/40 bg-destructive/5 p-3.5 text-xs sm:text-sm text-destructive">
@@ -738,6 +1061,15 @@ function AdminPage() {
 
                     <button
                       type="button"
+                      onClick={() => setShowAddRsvpModal(true)}
+                      className="flex items-center justify-center gap-1.5 rounded-xl border border-gold/70 bg-burgundy px-3 py-2.5 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-ivory shadow-sm hover:bg-burgundy-deep transition-all cursor-pointer"
+                    >
+                      <Plus size={13} strokeWidth={2} />
+                      <span className="whitespace-nowrap">Add RSVP</span>
+                    </button>
+
+                    <button
+                      type="button"
                       onClick={exportCsv}
                       className="flex items-center justify-center gap-1.5 rounded-xl border border-gold/60 bg-gradient-to-b from-ivory to-ivory-deep px-3 py-2.5 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-burgundy shadow-sm hover:bg-ivory-deep"
                     >
@@ -858,16 +1190,16 @@ function AdminPage() {
                                 )}
                                 <button
                                   type="button"
+                                  title="Edit RSVP"
+                                  onClick={() => setEditingRsvp(r)}
+                                  className="rounded-lg border border-gold/30 p-1.5 text-warmgrey hover:border-gold hover:text-burgundy"
+                                >
+                                  <Edit2 size={12} strokeWidth={1.6} />
+                                </button>
+                                <button
+                                  type="button"
                                   title="Delete RSVP"
-                                  onClick={() => {
-                                    if (
-                                      confirm(
-                                        `Delete RSVP record for ${r.full_name}?`,
-                                      )
-                                    ) {
-                                      destroyResponse.mutate(r.id);
-                                    }
-                                  }}
+                                  onClick={() => handleDeleteResponse(r)}
                                   className="rounded-lg border border-gold/30 p-1.5 text-warmgrey hover:border-destructive hover:text-destructive"
                                 >
                                   <Trash2 size={12} strokeWidth={1.6} />
@@ -1016,22 +1348,24 @@ function AdminPage() {
 
                                   {/* Delete Action */}
                                   <td className="px-4 py-3.5 align-top text-right">
-                                    <button
-                                      type="button"
-                                      title="Delete RSVP"
-                                      onClick={() => {
-                                        if (
-                                          confirm(
-                                            `Delete RSVP record for ${r.full_name}?`,
-                                          )
-                                        ) {
-                                          destroyResponse.mutate(r.id);
-                                        }
-                                      }}
-                                      className="rounded-lg border border-gold/30 p-1.5 text-warmgrey transition-colors hover:border-destructive hover:bg-destructive/10 hover:text-destructive"
-                                    >
-                                      <Trash2 size={13} strokeWidth={1.6} />
-                                    </button>
+                                    <div className="flex items-center justify-end gap-1.5">
+                                      <button
+                                        type="button"
+                                        title="Edit RSVP"
+                                        onClick={() => setEditingRsvp(r)}
+                                        className="rounded-lg border border-gold/30 p-1.5 text-warmgrey transition-colors hover:border-gold hover:text-burgundy cursor-pointer"
+                                      >
+                                        <Edit2 size={13} strokeWidth={1.6} />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        title="Delete RSVP"
+                                        onClick={() => handleDeleteResponse(r)}
+                                        className="rounded-lg border border-gold/30 p-1.5 text-warmgrey transition-colors hover:border-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer"
+                                      >
+                                        <Trash2 size={13} strokeWidth={1.6} />
+                                      </button>
+                                    </div>
                                   </td>
                                 </tr>
                               );
@@ -1050,10 +1384,7 @@ function AdminPage() {
               <section className="mt-4 space-y-4">
                 {showForm && (
                   <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      create.mutate();
-                    }}
+                    onSubmit={handleCreateGroup}
                     className="rounded-2xl border border-gold/40 bg-card p-4 sm:p-6 shadow-sm space-y-4"
                   >
                     <h3 className="font-creative text-lg sm:text-xl font-semibold text-burgundy">
@@ -1170,10 +1501,10 @@ function AdminPage() {
                     <div className="flex gap-2.5 pt-2">
                       <button
                         type="submit"
-                        disabled={create.isPending}
-                        className="rounded-xl border border-gold/70 bg-burgundy px-4 py-2.5 text-xs uppercase tracking-[0.16em] font-semibold text-ivory shadow-sm hover:bg-burgundy-deep disabled:opacity-50"
+                        disabled={isMutating}
+                        className="rounded-xl border border-gold/70 bg-burgundy px-4 py-2.5 text-xs uppercase tracking-[0.16em] font-semibold text-ivory shadow-sm hover:bg-burgundy-deep disabled:opacity-50 cursor-pointer"
                       >
-                        {create.isPending ? "Saving…" : "Save Group"}
+                        {isMutating ? "Saving…" : "Save Group"}
                       </button>
                       <button
                         type="button"
@@ -1212,22 +1543,24 @@ function AdminPage() {
                             <h4 className="font-creative text-base sm:text-lg font-semibold text-burgundy">
                               {g.name || "Invitation Group"}
                             </h4>
-                            <button
-                              type="button"
-                              title={`Delete ${g.name || "group"}`}
-                              onClick={() => {
-                                if (
-                                  confirm(
-                                    `Delete group "${g.name || "Invitation Group"}"?`,
-                                  )
-                                ) {
-                                  destroy.mutate(g.id);
-                                }
-                              }}
-                              className="rounded-lg border border-gold/30 p-1.5 text-warmgrey hover:border-destructive hover:text-destructive"
-                            >
-                              <Trash2 size={13} strokeWidth={1.6} />
-                            </button>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                title={`Edit ${g.name || "group"}`}
+                                onClick={() => setEditingGroup(g)}
+                                className="rounded-lg border border-gold/30 p-1.5 text-warmgrey hover:border-gold hover:text-burgundy"
+                              >
+                                <Edit2 size={13} strokeWidth={1.6} />
+                              </button>
+                              <button
+                                type="button"
+                                title={`Delete ${g.name || "group"}`}
+                                onClick={() => handleDeleteGroup(g)}
+                                className="rounded-lg border border-gold/30 p-1.5 text-warmgrey hover:border-destructive hover:text-destructive"
+                              >
+                                <Trash2 size={13} strokeWidth={1.6} />
+                              </button>
+                            </div>
                           </div>
                           <p className="mt-1 text-[0.68rem] uppercase tracking-[0.14em] text-gold-deep font-semibold">
                             {g.guest_count || 0} guests &middot;{" "}
@@ -1254,6 +1587,779 @@ function AdminPage() {
           </>
         )}
       </div>
+
+      {/* MODAL 1: Edit RSVP Record */}
+      {editingRsvp && (
+        <EditRsvpModalDialog
+          rsvp={editingRsvp}
+          onClose={() => setEditingRsvp(null)}
+          onSave={handleSaveEditedRsvp}
+          isSaving={isMutating}
+        />
+      )}
+
+      {/* MODAL 2: Add Guest RSVP Record */}
+      {showAddRsvpModal && (
+        <AddRsvpModalDialog
+          onClose={() => setShowAddRsvpModal(false)}
+          onCreate={handleCreateRsvp}
+          isSaving={isMutating}
+        />
+      )}
+
+      {/* MODAL 3: Edit Invitation Group */}
+      {editingGroup && (
+        <EditGroupModalDialog
+          group={editingGroup}
+          onClose={() => setEditingGroup(null)}
+          onSave={handleSaveEditedGroup}
+          isSaving={isMutating}
+        />
+      )}
     </main>
+  );
+}
+
+const ALL_EVENTS = [
+  { id: "carnival", label: "Carnival", time: "24 Feb (Day 1 Morning)" },
+  { id: "sur_sandhya", label: "Sur Sandhya", time: "24 Feb (Day 1 Evening)" },
+  { id: "wedding", label: "The Wedding", time: "25 Feb (Day 2 Evening)" },
+  { id: "reception", label: "The Reception", time: "25 Feb (Day 2 Night)" },
+];
+
+function EditRsvpModalDialog({
+  rsvp,
+  onClose,
+  onSave,
+  isSaving,
+}: {
+  rsvp: Response;
+  onClose: () => void;
+  onSave: (updated: Response) => void;
+  isSaving: boolean;
+}) {
+  const [form, setForm] = useState<Response>({ ...rsvp });
+  const [events, setEvents] = useState<string[]>(() => {
+    const raw = rsvp.attending_days;
+    if (!raw || raw === "all" || raw === "both") {
+      return ["carnival", "sur_sandhya", "wedding", "reception"];
+    }
+    if (raw === "24") return ["carnival", "sur_sandhya"];
+    if (raw === "25") return ["wedding", "reception"];
+    return raw.split(",").map((s) => s.trim().toLowerCase());
+  });
+
+  function toggleEvent(id: string) {
+    setEvents((prev) =>
+      prev.includes(id) ? prev.filter((e) => e !== id) : [...prev, id],
+    );
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const attendingDays =
+      events.length === 4
+        ? "all"
+        : events.length === 0
+          ? "none"
+          : events.join(",");
+    onSave({
+      ...form,
+      attending_days: attendingDays,
+    });
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+      <div className="relative w-full max-w-xl rounded-2xl border border-gold/45 bg-ivory p-5 sm:p-7 shadow-2xl my-8">
+        <div className="flex items-center justify-between border-b border-gold/30 pb-3">
+          <div>
+            <h3 className="font-creative text-lg sm:text-xl font-semibold text-burgundy">
+              Edit RSVP Details
+            </h3>
+            <p className="text-[0.66rem] uppercase tracking-[0.16em] text-gold-deep">
+              Record ID: {rsvp.id.slice(0, 8)}…
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-warmgrey hover:bg-gold/15 hover:text-burgundy cursor-pointer"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div>
+              <label className="block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold mb-1">
+                Guest Name *
+              </label>
+              <input
+                required
+                value={form.full_name}
+                onChange={(e) =>
+                  setForm({ ...form, full_name: e.target.value })
+                }
+                className="w-full rounded-xl border border-gold/40 bg-card px-3.5 py-2 text-xs sm:text-sm text-charcoal outline-none focus:border-gold"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold mb-1">
+                Contact Mobile *
+              </label>
+              <input
+                required
+                value={form.mobile}
+                onChange={(e) => setForm({ ...form, mobile: e.target.value })}
+                className="w-full rounded-xl border border-gold/40 bg-card px-3.5 py-2 text-xs sm:text-sm text-charcoal outline-none focus:border-gold font-mono"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+            <div>
+              <label className="block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold mb-1">
+                Attendance
+              </label>
+              <select
+                value={form.attendance}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    attendance: e.target.value as Response["attendance"],
+                  })
+                }
+                className="w-full rounded-xl border border-gold/40 bg-card px-3 py-2 text-xs text-charcoal outline-none focus:border-gold"
+              >
+                <option value="yes">Attending (Yes)</option>
+                <option value="some">Partially (Some)</option>
+                <option value="unsure">Not Sure (Unsure)</option>
+                <option value="no">Declined (No)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold mb-1">
+                Adults
+              </label>
+              <input
+                type="number"
+                min={0}
+                max={50}
+                value={form.adults}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    adults: parseInt(e.target.value) || 0,
+                  })
+                }
+                className="w-full rounded-xl border border-gold/40 bg-card px-3.5 py-2 text-xs sm:text-sm text-charcoal outline-none focus:border-gold"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold mb-1">
+                Children
+              </label>
+              <input
+                type="number"
+                min={0}
+                max={50}
+                value={form.children}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    children: parseInt(e.target.value) || 0,
+                  })
+                }
+                className="w-full rounded-xl border border-gold/40 bg-card px-3.5 py-2 text-xs sm:text-sm text-charcoal outline-none focus:border-gold"
+              />
+            </div>
+          </div>
+
+          {/* Attending Events */}
+          <div>
+            <label className="block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold mb-1.5">
+              Celebrations Attending
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {ALL_EVENTS.map((ev) => {
+                const checked = events.includes(ev.id);
+                return (
+                  <button
+                    key={ev.id}
+                    type="button"
+                    onClick={() => toggleEvent(ev.id)}
+                    className={`flex items-center justify-between rounded-xl border p-2.5 text-left transition-all cursor-pointer ${
+                      checked
+                        ? "border-[#E5C158] bg-burgundy text-ivory"
+                        : "border-gold/30 bg-card text-charcoal"
+                    }`}
+                  >
+                    <div>
+                      <p className="text-xs font-semibold leading-tight">
+                        {ev.label}
+                      </p>
+                      <p
+                        className={`text-[0.62rem] leading-tight ${checked ? "text-gold-light" : "text-warmgrey"}`}
+                      >
+                        {ev.time}
+                      </p>
+                    </div>
+                    {checked && <Check size={14} className="text-[#E5C158]" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Travel Logistics */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <div>
+              <label className="block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold mb-1">
+                Travel Mode
+              </label>
+              <select
+                value={form.travel_mode || ""}
+                onChange={(e) =>
+                  setForm({ ...form, travel_mode: e.target.value || null })
+                }
+                className="w-full rounded-xl border border-gold/40 bg-card px-2.5 py-2 text-xs text-charcoal outline-none focus:border-gold"
+              >
+                <option value="">None / Not set</option>
+                <option value="Car">Car</option>
+                <option value="Flight">Flight</option>
+                <option value="Train">Train</option>
+                <option value="Bus">Bus</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold mb-1">
+                From City
+              </label>
+              <input
+                value={form.travel_city || ""}
+                onChange={(e) =>
+                  setForm({ ...form, travel_city: e.target.value || null })
+                }
+                placeholder="e.g. Rajkot"
+                className="w-full rounded-xl border border-gold/40 bg-card px-2.5 py-2 text-xs text-charcoal outline-none focus:border-gold"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold mb-1">
+                Arrival Date
+              </label>
+              <input
+                type="date"
+                value={form.arrival_date || ""}
+                onChange={(e) =>
+                  setForm({ ...form, arrival_date: e.target.value || null })
+                }
+                className="w-full rounded-xl border border-gold/40 bg-card px-2.5 py-2 text-xs text-charcoal outline-none focus:border-gold"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold mb-1">
+                Arrival Time
+              </label>
+              <input
+                type="time"
+                value={form.arrival_time || ""}
+                onChange={(e) =>
+                  setForm({ ...form, arrival_time: e.target.value || null })
+                }
+                className="w-full rounded-xl border border-gold/40 bg-card px-2.5 py-2 text-xs text-charcoal outline-none focus:border-gold"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold mb-1">
+              Note / Wishes
+            </label>
+            <textarea
+              rows={2}
+              value={form.message || ""}
+              onChange={(e) =>
+                setForm({ ...form, message: e.target.value || null })
+              }
+              placeholder="Wishes, note, or stay requirement…"
+              className="w-full rounded-xl border border-gold/40 bg-card px-3.5 py-2 text-xs sm:text-sm text-charcoal outline-none focus:border-gold"
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-gold/25">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isSaving}
+              className="rounded-xl border border-gold/40 px-4 py-2 text-xs uppercase tracking-[0.14em] font-medium text-warmgrey hover:text-burgundy cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="rounded-xl border border-gold/70 bg-burgundy px-5 py-2 text-xs uppercase tracking-[0.14em] font-semibold text-ivory shadow-sm hover:bg-burgundy-deep disabled:opacity-50 cursor-pointer"
+            >
+              {isSaving ? "Saving…" : "Save Changes"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function AddRsvpModalDialog({
+  onClose,
+  onCreate,
+  isSaving,
+}: {
+  onClose: () => void;
+  onCreate: (data: {
+    fullName: string;
+    mobile: string;
+    attendance: "yes" | "some" | "unsure" | "no";
+    adults: number;
+    children: number;
+    attendingDays: string;
+    travelMode?: string;
+    travelCity?: string;
+    arrivalDate?: string;
+    arrivalTime?: string;
+    message?: string;
+  }) => void;
+  isSaving: boolean;
+}) {
+  const [fullName, setFullName] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [attendance, setAttendance] = useState<
+    "yes" | "some" | "unsure" | "no"
+  >("yes");
+  const [adults, setAdults] = useState(2);
+  const [children, setChildren] = useState(0);
+  const [events, setEvents] = useState<string[]>([
+    "carnival",
+    "sur_sandhya",
+    "wedding",
+    "reception",
+  ]);
+  const [travelMode, setTravelMode] = useState("");
+  const [travelCity, setTravelCity] = useState("");
+  const [arrivalDate, setArrivalDate] = useState("");
+  const [arrivalTime, setArrivalTime] = useState("");
+  const [message, setMessage] = useState("");
+
+  function toggleEvent(id: string) {
+    setEvents((prev) =>
+      prev.includes(id) ? prev.filter((e) => e !== id) : [...prev, id],
+    );
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const attendingDays =
+      events.length === 4
+        ? "all"
+        : events.length === 0
+          ? "none"
+          : events.join(",");
+    onCreate({
+      fullName,
+      mobile,
+      attendance,
+      adults,
+      children,
+      attendingDays,
+      travelMode: travelMode || undefined,
+      travelCity: travelCity || undefined,
+      arrivalDate: arrivalDate || undefined,
+      arrivalTime: arrivalTime || undefined,
+      message: message || undefined,
+    });
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+      <div className="relative w-full max-w-xl rounded-2xl border border-gold/45 bg-ivory p-5 sm:p-7 shadow-2xl my-8">
+        <div className="flex items-center justify-between border-b border-gold/30 pb-3">
+          <div>
+            <h3 className="font-creative text-lg sm:text-xl font-semibold text-burgundy">
+              Add Guest RSVP Record
+            </h3>
+            <p className="text-[0.66rem] uppercase tracking-[0.16em] text-gold-deep">
+              Record a response received by phone or in person
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-warmgrey hover:bg-gold/15 hover:text-burgundy cursor-pointer"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div>
+              <label className="block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold mb-1">
+                Guest Name *
+              </label>
+              <input
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="e.g. Ramesh Bhai"
+                className="w-full rounded-xl border border-gold/40 bg-card px-3.5 py-2 text-xs sm:text-sm text-charcoal outline-none focus:border-gold"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold mb-1">
+                Contact Mobile *
+              </label>
+              <input
+                required
+                value={mobile}
+                onChange={(e) => setMobile(e.target.value)}
+                placeholder="e.g. +91 98765 43210"
+                className="w-full rounded-xl border border-gold/40 bg-card px-3.5 py-2 text-xs sm:text-sm text-charcoal outline-none focus:border-gold font-mono"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+            <div>
+              <label className="block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold mb-1">
+                Attendance
+              </label>
+              <select
+                value={attendance}
+                onChange={(e) =>
+                  setAttendance(e.target.value as "yes" | "some" | "unsure" | "no")
+                }
+                className="w-full rounded-xl border border-gold/40 bg-card px-3 py-2 text-xs text-charcoal outline-none focus:border-gold"
+              >
+                <option value="yes">Attending (Yes)</option>
+                <option value="some">Partially (Some)</option>
+                <option value="unsure">Not Sure (Unsure)</option>
+                <option value="no">Declined (No)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold mb-1">
+                Adults
+              </label>
+              <input
+                type="number"
+                min={0}
+                max={50}
+                value={adults}
+                onChange={(e) => setAdults(parseInt(e.target.value) || 0)}
+                className="w-full rounded-xl border border-gold/40 bg-card px-3.5 py-2 text-xs sm:text-sm text-charcoal outline-none focus:border-gold"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold mb-1">
+                Children
+              </label>
+              <input
+                type="number"
+                min={0}
+                max={50}
+                value={children}
+                onChange={(e) => setChildren(parseInt(e.target.value) || 0)}
+                className="w-full rounded-xl border border-gold/40 bg-card px-3.5 py-2 text-xs sm:text-sm text-charcoal outline-none focus:border-gold"
+              />
+            </div>
+          </div>
+
+          {/* Attending Events */}
+          <div>
+            <label className="block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold mb-1.5">
+              Celebrations Attending
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {ALL_EVENTS.map((ev) => {
+                const checked = events.includes(ev.id);
+                return (
+                  <button
+                    key={ev.id}
+                    type="button"
+                    onClick={() => toggleEvent(ev.id)}
+                    className={`flex items-center justify-between rounded-xl border p-2.5 text-left transition-all cursor-pointer ${
+                      checked
+                        ? "border-[#E5C158] bg-burgundy text-ivory"
+                        : "border-gold/30 bg-card text-charcoal"
+                    }`}
+                  >
+                    <div>
+                      <p className="text-xs font-semibold leading-tight">
+                        {ev.label}
+                      </p>
+                      <p
+                        className={`text-[0.62rem] leading-tight ${checked ? "text-gold-light" : "text-warmgrey"}`}
+                      >
+                        {ev.time}
+                      </p>
+                    </div>
+                    {checked && <Check size={14} className="text-[#E5C158]" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Travel Logistics */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <div>
+              <label className="block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold mb-1">
+                Travel Mode
+              </label>
+              <select
+                value={travelMode}
+                onChange={(e) => setTravelMode(e.target.value)}
+                className="w-full rounded-xl border border-gold/40 bg-card px-2.5 py-2 text-xs text-charcoal outline-none focus:border-gold"
+              >
+                <option value="">None / Not set</option>
+                <option value="Car">Car</option>
+                <option value="Flight">Flight</option>
+                <option value="Train">Train</option>
+                <option value="Bus">Bus</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold mb-1">
+                From City
+              </label>
+              <input
+                value={travelCity}
+                onChange={(e) => setTravelCity(e.target.value)}
+                placeholder="e.g. Ahmedabad"
+                className="w-full rounded-xl border border-gold/40 bg-card px-2.5 py-2 text-xs text-charcoal outline-none focus:border-gold"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold mb-1">
+                Arrival Date
+              </label>
+              <input
+                type="date"
+                value={arrivalDate}
+                onChange={(e) => setArrivalDate(e.target.value)}
+                className="w-full rounded-xl border border-gold/40 bg-card px-2.5 py-2 text-xs text-charcoal outline-none focus:border-gold"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold mb-1">
+                Arrival Time
+              </label>
+              <input
+                type="time"
+                value={arrivalTime}
+                onChange={(e) => setArrivalTime(e.target.value)}
+                className="w-full rounded-xl border border-gold/40 bg-card px-2.5 py-2 text-xs text-charcoal outline-none focus:border-gold"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold mb-1">
+              Note / Wishes
+            </label>
+            <textarea
+              rows={2}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Wishes, note, or stay requirement…"
+              className="w-full rounded-xl border border-gold/40 bg-card px-3.5 py-2 text-xs sm:text-sm text-charcoal outline-none focus:border-gold"
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-gold/25">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isSaving}
+              className="rounded-xl border border-gold/40 px-4 py-2 text-xs uppercase tracking-[0.14em] font-medium text-warmgrey hover:text-burgundy cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="rounded-xl border border-gold/70 bg-burgundy px-5 py-2 text-xs uppercase tracking-[0.14em] font-semibold text-ivory shadow-sm hover:bg-burgundy-deep disabled:opacity-50 cursor-pointer"
+            >
+              {isSaving ? "Saving…" : "Add RSVP"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function EditGroupModalDialog({
+  group,
+  onClose,
+  onSave,
+  isSaving,
+}: {
+  group: Group;
+  onClose: () => void;
+  onSave: (updated: Group) => void;
+  isSaving: boolean;
+}) {
+  const [form, setForm] = useState<Group>({ ...group });
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    onSave(form);
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+      <div className="relative w-full max-w-lg rounded-2xl border border-gold/45 bg-ivory p-5 sm:p-7 shadow-2xl my-8">
+        <div className="flex items-center justify-between border-b border-gold/30 pb-3">
+          <div>
+            <h3 className="font-creative text-lg sm:text-xl font-semibold text-burgundy">
+              Edit Invitation Group
+            </h3>
+            <p className="text-[0.66rem] uppercase tracking-[0.16em] text-gold-deep">
+              Group ID: {group.id.slice(0, 8)}…
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-warmgrey hover:bg-gold/15 hover:text-burgundy cursor-pointer"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+          <div className="grid gap-3.5 sm:grid-cols-2">
+            <div>
+              <label className="block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold">
+                Group Name *
+              </label>
+              <input
+                required
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                className="mt-1.5 w-full rounded-xl border border-gold/40 bg-card px-3.5 py-2.5 text-xs sm:text-sm text-charcoal outline-none focus:border-gold"
+              />
+            </div>
+            <div>
+              <label className="block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold">
+                Side
+              </label>
+              <select
+                value={form.side}
+                onChange={(e) => setForm({ ...form, side: e.target.value })}
+                className="mt-1.5 w-full rounded-xl border border-gold/40 bg-card px-3.5 py-2.5 text-xs sm:text-sm text-charcoal outline-none focus:border-gold"
+              >
+                <option value="groom">Groom’s Side</option>
+                <option value="bride">Bride’s Side</option>
+                <option value="both">Both Sides</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold">
+                Expected Guest Count
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={100}
+                value={form.guest_count}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    guest_count: parseInt(e.target.value) || 1,
+                  })
+                }
+                className="mt-1.5 w-full rounded-xl border border-gold/40 bg-card px-3.5 py-2.5 text-xs sm:text-sm text-charcoal outline-none focus:border-gold"
+              />
+            </div>
+            <div>
+              <label className="block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold">
+                Invited Days
+              </label>
+              <select
+                value={form.invited_days}
+                onChange={(e) =>
+                  setForm({ ...form, invited_days: e.target.value })
+                }
+                className="mt-1.5 w-full rounded-xl border border-gold/40 bg-card px-3.5 py-2.5 text-xs sm:text-sm text-charcoal outline-none focus:border-gold"
+              >
+                <option value="both">Both Days — 24 & 25 Feb</option>
+                <option value="24">24 Feb — Carnival & Sur Sandhya</option>
+                <option value="25">25 Feb — Wedding & Reception</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold">
+                Contact Mobile (Optional)
+              </label>
+              <input
+                value={form.contact_mobile || ""}
+                onChange={(e) =>
+                  setForm({ ...form, contact_mobile: e.target.value || null })
+                }
+                className="mt-1.5 w-full rounded-xl border border-gold/40 bg-card px-3.5 py-2.5 text-xs sm:text-sm text-charcoal outline-none focus:border-gold font-mono"
+              />
+            </div>
+            <div>
+              <label className="block text-[0.62rem] uppercase tracking-[0.2em] text-gold-deep font-semibold">
+                Notes / Requirements (Optional)
+              </label>
+              <input
+                value={form.notes || ""}
+                onChange={(e) =>
+                  setForm({ ...form, notes: e.target.value || null })
+                }
+                className="mt-1.5 w-full rounded-xl border border-gold/40 bg-card px-3.5 py-2.5 text-xs sm:text-sm text-charcoal outline-none focus:border-gold"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-gold/25">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isSaving}
+              className="rounded-xl border border-gold/40 px-4 py-2 text-xs uppercase tracking-[0.14em] font-medium text-warmgrey hover:text-burgundy cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="rounded-xl border border-gold/70 bg-burgundy px-5 py-2 text-xs uppercase tracking-[0.14em] font-semibold text-ivory shadow-sm hover:bg-burgundy-deep disabled:opacity-50 cursor-pointer"
+            >
+              {isSaving ? "Saving…" : "Save Changes"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }

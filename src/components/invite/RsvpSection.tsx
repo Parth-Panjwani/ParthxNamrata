@@ -2019,14 +2019,14 @@ export function RsvpSection() {
                   )}
                 </div>
 
-                {/* Arrival Date (Calendar) & Time (Clock) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  <div>
+                {/* Arrival Date (Calendar) & Time (Clock) - Fully mobile responsive without WebKit overflow */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full min-w-0 max-w-full">
+                  <div className="w-full min-w-0 max-w-full">
                     <label className={labelClass} htmlFor="arrivalDate">
                       Arrival Date
                     </label>
-                    <div className="relative">
-                      <div className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gold-deep">
+                    <div className="relative w-full min-w-0 max-w-full">
+                      <div className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gold-deep z-10">
                         <Calendar size={15} />
                       </div>
                       <input
@@ -2034,24 +2034,38 @@ export function RsvpSection() {
                         id="arrivalDate"
                         min="2027-02-20"
                         max="2027-02-28"
-                        className={`${fieldClass} pl-10 cursor-pointer`}
+                        style={{
+                          WebkitAppearance: "none",
+                          minWidth: 0,
+                          maxWidth: "100%",
+                          width: "100%",
+                          boxSizing: "border-box",
+                        }}
+                        className={`${fieldClass} pl-10 block box-border min-w-0 max-w-full cursor-pointer [&::-webkit-date-and-time-value]:text-left [&::-webkit-date-and-time-value]:min-w-0 [&::-webkit-date-and-time-value]:overflow-hidden [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-70 [&::-webkit-calendar-picker-indicator]:hover:opacity-100`}
                         {...register("arrivalDate")}
                       />
                     </div>
                   </div>
 
-                  <div>
+                  <div className="w-full min-w-0 max-w-full">
                     <label className={labelClass} htmlFor="arrivalTime">
                       Arrival Time
                     </label>
-                    <div className="relative">
-                      <div className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gold-deep">
+                    <div className="relative w-full min-w-0 max-w-full">
+                      <div className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gold-deep z-10">
                         <Clock size={15} />
                       </div>
                       <input
                         type="time"
                         id="arrivalTime"
-                        className={`${fieldClass} pl-10 cursor-pointer`}
+                        style={{
+                          WebkitAppearance: "none",
+                          minWidth: 0,
+                          maxWidth: "100%",
+                          width: "100%",
+                          boxSizing: "border-box",
+                        }}
+                        className={`${fieldClass} pl-10 block box-border min-w-0 max-w-full cursor-pointer [&::-webkit-date-and-time-value]:text-left [&::-webkit-date-and-time-value]:min-w-0 [&::-webkit-date-and-time-value]:overflow-hidden [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-70 [&::-webkit-calendar-picker-indicator]:hover:opacity-100`}
                         {...register("arrivalTime")}
                       />
                     </div>

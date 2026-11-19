@@ -45,27 +45,29 @@ function InvitationExperience() {
         <RsvpSection />
 
         {/* Quiet Closing Scene */}
-        <footer className="relative border-t border-gold/25 pt-6 pb-14 text-center overflow-hidden">
-          <div className="relative mx-auto w-full max-w-5xl px-0 py-2">
-            <img
-              src={palaceLine}
-              alt="Palace Illustration"
-              aria-hidden="true"
-              loading="lazy"
-              width={1920}
-              height={640}
-              className="pointer-events-none mx-auto w-full min-w-[100%] scale-105 sm:scale-100 object-cover red-palace-silhouette opacity-95 transition-all"
-            />
+        <footer className="relative border-t border-gold/30 pt-10 pb-16 text-center overflow-hidden bg-gradient-to-b from-transparent via-ivory-deep/30 to-ivory-deep">
+          <div className="relative mx-auto w-full max-w-5xl px-4 sm:px-6">
+            <div className="flex justify-center items-center py-2 sm:py-4">
+              <img
+                src={palaceLine}
+                alt="Royal Palace of Rajkot"
+                aria-hidden="true"
+                loading="lazy"
+                width={1920}
+                height={640}
+                className="pointer-events-none mx-auto w-full max-w-2xl sm:max-w-4xl h-auto max-h-52 sm:max-h-72 object-contain royal-palace-silhouette drop-shadow-[0_4px_16px_rgba(103,18,36,0.12)] opacity-95 transition-all"
+              />
+            </div>
           </div>
 
-          <div className="mt-2 flex flex-col items-center justify-center gap-1">
-            <p className="font-display italic text-lg sm:text-xl text-burgundy font-medium">
+          <div className="mt-3 flex flex-col items-center justify-center gap-1.5 px-4">
+            <p className="font-display italic text-xl sm:text-2xl text-burgundy font-medium tracking-wide">
               See you in Rajkot.
             </p>
-            <p className="font-creative text-base sm:text-lg tracking-widest text-burgundy font-bold mt-0.5">
+            <p className="font-creative text-lg sm:text-xl tracking-widest text-burgundy font-bold mt-0.5">
               P &times; N
             </p>
-            <p className="text-[0.62rem] uppercase tracking-[0.3em] text-burgundy/80 font-bold mt-0.5">
+            <p className="text-[0.66rem] uppercase tracking-[0.34em] text-burgundy/80 font-bold mt-0.5">
               24 &mdash; 25 &middot; 02 &middot; 27
             </p>
           </div>
