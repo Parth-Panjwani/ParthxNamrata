@@ -12,12 +12,19 @@ const STORAGE_KEY = "pn-rsvp";
 
 const formSchema = z.object({
   fullName: z.string().trim().min(2, "Please enter your name").max(120),
-  mobile: z.string().trim().default(""),
-  attendance: z.enum(["yes", "unsure", "no"]),
+  mobile: z
+    .string()
+    .trim()
+    .max(20)
+    .regex(/^[0-9+\-\s()]*$/, "Only digits and + - ( ) are allowed")
+    .optional()
+    .or(z.literal(""))
+    .default(""),
+  attendance: z.enum(["yes", "some", "unsure", "no"]),
   adults: z.coerce.number().int().min(1).max(50).default(2),
   children: z.coerce.number().int().min(0).max(50).default(0),
   attendingDays: z.enum(["24", "25", "both"]).default("both"),
-  message: z.string().trim().default(""),
+  message: z.string().trim().max(1000).default(""),
 });
 
 type FormValues = z.input<typeof formSchema>;
@@ -26,18 +33,20 @@ type Saved = { id: string; values: z.output<typeof formSchema> };
 const EASE = [0.22, 0.61, 0.24, 1] as const;
 
 const ATTENDANCE_CHOICES = [
-  { value: "yes", label: "Obviously." },
-  { value: "unsure", label: "Still figuring it out." },
-  { value: "no", label: "Sadly, can't make it." },
-] as const;
+  { value: "yes" as const, label: "Absolutely!" },
+  { value: "some" as const, label: "Some of us." },
+  { value: "unsure" as const, label: "Still figuring out." },
+  { value: "no" as const, label: "Sadly, can't make it." },
+];
 
 const DAY_CHOICES = [
-  { value: "both", label: "Both" },
-  { value: "24", label: "24 Feb" },
-  { value: "25", label: "25 Feb" },
+  { value: "both" as const, label: "Both Days", sub: "24 & 25 Feb" },
+  { value: "24" as const, label: "Day 1 Only", sub: "24 Feb" },
+  { value: "25" as const, label: "Day 2 Only", sub: "25 Feb" },
 ] as const;
 
-const labelClass = "block text-[0.62rem] sm:text-[0.66rem] uppercase tracking-[0.24em] text-gold-deep font-semibold";
+const labelClass =
+  "block text-[0.62rem] sm:text-[0.66rem] uppercase tracking-[0.24em] text-gold-deep font-semibold";
 const fieldClass =
   "mt-1.5 w-full rounded-xl border border-gold/45 bg-ivory/90 px-4 py-3 font-sans text-[0.88rem] text-charcoal outline-none transition-all duration-200 placeholder:text-warmgrey/50 shadow-sm focus:border-gold focus:bg-ivory focus:ring-2 focus:ring-gold/30";
 
@@ -88,7 +97,7 @@ export function RsvpSection() {
               setSaved(null);
             }
           })
-          .catch(() => {});
+          .catch(() => { });
       }
     } catch {
       localStorage.removeItem(STORAGE_KEY);
@@ -142,14 +151,23 @@ export function RsvpSection() {
 
   const showSuccess = saved && !editing;
 
+  const isAttendingOrSome = attendance === "yes" || attendance === "some";
+
   return (
     <section id="rsvp" className="canvas relative pb-20 sm:pb-28">
-      <header className="flex flex-col items-center text-center">
-        <h2 className="font-creative text-3xl sm:text-4xl font-semibold tracking-widest text-burgundy uppercase">
-          Are You In?
+      <motion.header
+        initial={{ opacity: 0, y: 14 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-40px" }}
+        transition={{ duration: 0.7, ease: EASE }}
+        className="flex flex-col items-center text-center"
+      >
+        <span className="eyebrow tracking-royal mb-1 text-gold-deep">Join Us</span>
+        <h2 className="font-creative text-2xl sm:text-3xl font-bold tracking-widest text-burgundy uppercase">
+          RSVP
         </h2>
-        <Divider className="mt-4" />
-      </header>
+        <Divider className="mt-3" />
+      </motion.header>
 
       <AnimatePresence mode="wait" initial={false}>
         {showSuccess ? (
@@ -182,6 +200,17 @@ export function RsvpSection() {
               </>
             )}
 
+            {saved.values.attendance === "some" && (
+              <>
+                <h3 className="font-creative mt-5 text-2xl sm:text-3xl font-semibold text-burgundy">
+                  Wonderful! We'll see some of you. &hearts;
+                </h3>
+                <p className="font-display italic text-sm sm:text-base text-gold-deep mt-1.5">
+                  Every face makes it more special.
+                </p>
+              </>
+            )}
+
             {saved.values.attendance === "unsure" && (
               <>
                 <h3 className="font-creative mt-5 text-2xl sm:text-3xl font-semibold text-burgundy">
@@ -206,7 +235,7 @@ export function RsvpSection() {
 
             <Divider className="my-6" />
 
-            {saved.values.attendance === "yes" && (
+            {(saved.values.attendance === "yes" || saved.values.attendance === "some") && (
               <div className="hairline-gold mx-auto max-w-sm rounded-xl bg-ivory/80 overflow-hidden shadow-sm text-left">
                 <dl className="divide-y divide-gold/20">
                   <div className="flex items-center justify-between gap-4 px-4 py-2.5">
@@ -217,12 +246,14 @@ export function RsvpSection() {
                   </div>
                   <div className="flex items-center justify-between gap-4 px-4 py-2.5">
                     <dt className="text-[0.58rem] uppercase tracking-[0.2em] text-gold-deep font-semibold">
-                      Attending Days
+                      Attending
                     </dt>
-                    <dd className="font-display text-sm text-burgundy">
+                    <dd className="font-display text-sm text-burgundy text-right">
                       {saved.values.attendingDays === "both"
                         ? "Both Days (24 & 25 Feb)"
-                        : `${saved.values.attendingDays} Feb 2027`}
+                        : saved.values.attendingDays === "24"
+                          ? "24 Feb — Carnival & Sur Sandhya"
+                          : "25 Feb — Wedding & Reception"}
                     </dd>
                   </div>
                   <div className="flex items-center justify-between gap-4 px-4 py-2.5">
@@ -231,7 +262,9 @@ export function RsvpSection() {
                     </dt>
                     <dd className="font-display text-sm text-burgundy">
                       {saved.values.adults} Adults
-                      {saved.values.children > 0 ? `, ${saved.values.children} Children` : ""}
+                      {(saved.values.children ?? 0) > 0
+                        ? `, ${saved.values.children} Children`
+                        : ""}
                     </dd>
                   </div>
                 </dl>
@@ -264,16 +297,16 @@ export function RsvpSection() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.6, ease: EASE }}
-            className="paper inner-frame grain relative mt-8 sm:mt-12 space-y-6 px-5 py-8 sm:px-10 sm:py-10 rounded-3xl shadow-lift"
+            className="paper inner-frame grain relative mt-8 sm:mt-12 space-y-6 px-5 py-8 sm:px-10 sm:py-10 rounded-3xl shadow-lift border border-gold/45"
           >
             <CornerFlourishes />
 
-            {/* 3 Main Choice Cards */}
+            {/* Attendance Choice */}
             <div>
-              <label className={`${labelClass} text-center mb-3`}>
+              <label className={`${labelClass} text-center block mb-3`}>
                 Will you be celebrating with us?
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-2 gap-2.5">
                 {ATTENDANCE_CHOICES.map((choice) => {
                   const selected = attendance === choice.value;
                   return (
@@ -281,11 +314,10 @@ export function RsvpSection() {
                       key={choice.value}
                       type="button"
                       onClick={() => setValue("attendance", choice.value)}
-                      className={`relative cursor-pointer rounded-2xl p-3.5 text-center transition-all duration-300 border ${
-                        selected
-                          ? "border-[#E5C158] bg-gradient-to-r from-[#8B1A2D] via-[#671224] to-[#480A17] text-ivory shadow-md"
-                          : "border-gold/40 bg-ivory/80 text-charcoal hover:border-gold hover:bg-ivory-deep/60"
-                      }`}
+                      className={`relative cursor-pointer rounded-2xl p-3.5 text-center transition-all duration-300 border ${selected
+                        ? "border-[#E5C158] bg-gradient-to-r from-[#8B1A2D] via-[#671224] to-[#480A17] text-ivory shadow-md"
+                        : "border-gold/40 bg-ivory/80 text-charcoal hover:border-gold hover:bg-ivory-deep/60"
+                        }`}
                     >
                       <span className="font-display text-sm sm:text-base font-medium">
                         {choice.label}
@@ -303,7 +335,7 @@ export function RsvpSection() {
               transition={{ duration: 0.4 }}
               className="space-y-5 pt-2"
             >
-              {/* Name Input (Always shown) */}
+              {/* Name */}
               <div>
                 <label className={labelClass} htmlFor="fullName">
                   Your Name
@@ -311,15 +343,31 @@ export function RsvpSection() {
                 <input
                   id="fullName"
                   className={fieldClass}
-                  placeholder="Your Name"
+                  placeholder="Your full name"
                   autoComplete="name"
                   {...register("fullName")}
                 />
                 <FieldError message={errors.fullName?.message} />
               </div>
 
-              {/* Attending Guests Details */}
-              {attendance === "yes" && (
+              {/* Mobile */}
+              <div>
+                <label className={labelClass} htmlFor="mobile">
+                  Mobile Number <span className="normal-case tracking-normal text-warmgrey font-normal">(optional)</span>
+                </label>
+                <input
+                  id="mobile"
+                  type="tel"
+                  className={fieldClass}
+                  placeholder="+91 98765 43210"
+                  autoComplete="tel"
+                  {...register("mobile")}
+                />
+                <FieldError message={errors.mobile?.message} />
+              </div>
+
+              {/* Attending Guest Details */}
+              {isAttendingOrSome && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
@@ -359,7 +407,9 @@ export function RsvpSection() {
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
-                            onClick={() => setValue("children", Math.max(0, (childrenCount || 0) - 1))}
+                            onClick={() =>
+                              setValue("children", Math.max(0, (childrenCount || 0) - 1))
+                            }
                             className="h-7 w-7 rounded-lg border border-gold/40 bg-ivory text-burgundy font-semibold text-sm flex items-center justify-center hover:bg-gold/15 active:scale-95"
                           >
                             &minus;
@@ -369,7 +419,9 @@ export function RsvpSection() {
                           </span>
                           <button
                             type="button"
-                            onClick={() => setValue("children", Math.min(10, (childrenCount || 0) + 1))}
+                            onClick={() =>
+                              setValue("children", Math.min(10, (childrenCount || 0) + 1))
+                            }
                             className="h-7 w-7 rounded-lg border border-gold/40 bg-ivory text-burgundy font-semibold text-sm flex items-center justify-center hover:bg-gold/15 active:scale-95"
                           >
                             +
@@ -379,10 +431,10 @@ export function RsvpSection() {
                     </div>
                   </div>
 
-                  {/* Which Days */}
+                  {/* Which Days with event descriptions */}
                   <div>
                     <label className={labelClass}>Which Days?</label>
-                    <div className="mt-1.5 grid grid-cols-3 gap-2">
+                    <div className="mt-1.5 space-y-2">
                       {DAY_CHOICES.map((day) => {
                         const isDaySelected = attendingDays === day.value;
                         return (
@@ -390,13 +442,32 @@ export function RsvpSection() {
                             key={day.value}
                             type="button"
                             onClick={() => setValue("attendingDays", day.value)}
-                            className={`cursor-pointer rounded-xl py-2.5 text-center text-[0.78rem] font-medium transition-all duration-200 border ${
-                              isDaySelected
-                                ? "border-[#E5C158] bg-gradient-to-r from-[#8B1A2D] via-[#671224] to-[#480A17] text-ivory shadow-sm"
-                                : "border-gold/40 bg-ivory/90 text-charcoal hover:border-gold/80"
-                            }`}
+                            className={`w-full cursor-pointer rounded-xl px-4 py-3 text-left transition-all duration-200 border ${isDaySelected
+                              ? "border-[#E5C158] bg-gradient-to-r from-[#8B1A2D] via-[#671224] to-[#480A17] text-ivory shadow-sm"
+                              : "border-gold/40 bg-ivory/90 text-charcoal hover:border-gold/80"
+                              }`}
                           >
-                            {day.label}
+                            <span className="flex items-center justify-between">
+                              <span className="font-display text-[0.88rem] font-medium">{day.label}</span>
+                              <span className={`text-[0.72rem] font-medium ${isDaySelected ? "text-gold-light" : "text-warmgrey"}`}>
+                                {day.sub}
+                              </span>
+                            </span>
+                            {day.value === "both" && (
+                              <span className={`mt-0.5 block text-[0.68rem] ${isDaySelected ? "text-ivory/70" : "text-warmgrey/80"}`}>
+                                Carnival · Sur Sandhya · Wedding · Reception
+                              </span>
+                            )}
+                            {day.value === "24" && (
+                              <span className={`mt-0.5 block text-[0.68rem] ${isDaySelected ? "text-ivory/70" : "text-warmgrey/80"}`}>
+                                Carnival (Morning) · Sur Sandhya (Evening)
+                              </span>
+                            )}
+                            {day.value === "25" && (
+                              <span className={`mt-0.5 block text-[0.68rem] ${isDaySelected ? "text-ivory/70" : "text-warmgrey/80"}`}>
+                                The Wedding (Day) · Grand Reception (Evening)
+                              </span>
+                            )}
                           </button>
                         );
                       })}
@@ -405,8 +476,25 @@ export function RsvpSection() {
                 </motion.div>
               )}
 
+              {/* Optional message */}
+              <div>
+                <label className={labelClass} htmlFor="message">
+                  A note for the couple{" "}
+                  <span className="normal-case tracking-normal text-warmgrey font-normal">
+                    (optional)
+                  </span>
+                </label>
+                <textarea
+                  id="message"
+                  rows={3}
+                  className={`${fieldClass} resize-none`}
+                  placeholder="Wishes, blessings, or a sweet note…"
+                  {...register("message")}
+                />
+              </div>
+
               {serverError && (
-                <p className="border border-destructive/40 bg-destructive/5 px-3 py-2 text-[0.75rem] text-destructive">
+                <p className="border border-destructive/40 bg-destructive/5 rounded-lg px-3 py-2 text-[0.75rem] text-destructive">
                   {serverError}
                 </p>
               )}
@@ -427,9 +515,11 @@ export function RsvpSection() {
                           ? "Update RSVP"
                           : attendance === "yes"
                             ? "Confirm RSVP"
-                            : attendance === "unsure"
-                              ? "Keep Me Posted"
-                              : "Send Warm Wishes"}
+                            : attendance === "some"
+                              ? "Confirm Attendance"
+                              : attendance === "unsure"
+                                ? "Keep Me Posted"
+                                : "Send Warm Wishes"}
                       </span>
                       <ArrowRight size={14} strokeWidth={2} />
                     </>

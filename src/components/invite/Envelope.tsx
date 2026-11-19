@@ -37,12 +37,12 @@ export function Envelope({ onOpened }: { onOpened: () => void }) {
       {/* Ambient gold glow behind envelope */}
       <motion.div
         aria-hidden="true"
-        className="pointer-events-none absolute -inset-x-[25%] -inset-y-[20%] -z-10 rounded-full opacity-50 blur-3xl"
+        className="pointer-events-none absolute -inset-x-[35%] -inset-y-[30%] -z-10 rounded-full blur-3xl"
         style={{
           background:
-            "radial-gradient(circle, rgba(229,193,88,0.4) 0%, rgba(107,18,34,0.25) 55%, transparent 100%)",
+            "radial-gradient(circle, rgba(229,193,88,0.5) 0%, rgba(103,18,36,0.3) 55%, transparent 100%)",
         }}
-        animate={{ scale: opening ? 1.2 : [1, 1.05, 1], opacity: opening ? 0.75 : [0.45, 0.6, 0.45] }}
+        animate={{ scale: opening ? 1.3 : [1, 1.08, 1], opacity: opening ? 0.85 : [0.55, 0.75, 0.55] }}
         transition={{ duration: opening ? 1.2 : 4, repeat: opening ? 0 : Infinity, ease: "easeInOut" }}
       />
 
@@ -61,20 +61,27 @@ export function Envelope({ onOpened }: { onOpened: () => void }) {
 
         {/* ── Invitation Card Inside ── */}
         <motion.div
-          className="paper inner-frame absolute left-[5%] right-[5%] grid place-items-center rounded-xl shadow-lift"
+          className="paper inner-frame absolute left-[5%] right-[5%] grid place-items-center rounded-2xl shadow-lift border border-gold/40"
           style={{ top: "8%", height: "84%", zIndex: rising ? 25 : 5 }}
           initial={{ y: "6%" }}
           animate={{ y: rising ? "-64%" : "6%" }}
           transition={{ duration: 1.1, ease: EASE }}
         >
-          <div className="flex flex-col items-center justify-center gap-1 px-4 text-center">
-            <Monogram size={66} />
-            <p className="font-creative text-base sm:text-lg font-semibold text-burgundy tracking-wide mt-1 leading-tight">
+          <div className="flex flex-col items-center justify-center gap-1.5 px-4 text-center">
+            {/* Medallion Monogram with glowing rim */}
+            <div className="relative p-1.5 rounded-full border border-gold/45 bg-gradient-to-b from-gold/15 to-transparent shadow-[0_0_15px_rgba(212,175,55,0.25)]">
+              <Monogram size={68} />
+            </div>
+            <p className="font-creative text-lg sm:text-xl font-bold text-burgundy tracking-wide leading-tight drop-shadow-sm">
               Parth &amp; Namrata
             </p>
-            <p className="text-[0.6rem] sm:text-[0.62rem] uppercase tracking-[0.26em] text-gold-deep font-semibold mt-0.5">
-              24 &mdash; 25 FEB 2027
-            </p>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="h-px w-6 bg-gold/70" />
+              <p className="text-[0.6rem] sm:text-[0.64rem] uppercase tracking-[0.28em] text-gold-deep font-bold">
+                24 &mdash; 25 FEB 2027
+              </p>
+              <span className="h-px w-6 bg-gold/70" />
+            </div>
           </div>
         </motion.div>
 

@@ -105,8 +105,8 @@ function InvitationExperience() {
         <RsvpSection />
 
         {/* Quiet Closing Scene */}
-        <footer className="relative border-t border-gold/20 pt-8 pb-16 text-center">
-          <div className="relative mx-auto w-full max-w-4xl px-4 py-2 opacity-85">
+        <footer className="relative border-t border-gold/25 pt-6 pb-14 text-center overflow-hidden">
+          <div className="relative mx-auto w-full max-w-5xl px-0 py-2">
             <img
               src={palaceLine}
               alt="Palace Illustration"
@@ -114,18 +114,18 @@ function InvitationExperience() {
               loading="lazy"
               width={1920}
               height={640}
-              className="pointer-events-none mx-auto w-full max-w-4xl opacity-90 transition-all filter drop-shadow-[0_4px_12px_rgba(184,138,26,0.25)]"
+              className="pointer-events-none mx-auto w-full min-w-[100%] scale-105 sm:scale-100 object-cover red-palace-silhouette opacity-95 transition-all"
             />
           </div>
 
-          <div className="mt-4 flex flex-col items-center justify-center gap-1">
-            <p className="font-display italic text-lg sm:text-xl text-burgundy font-normal">
+          <div className="mt-2 flex flex-col items-center justify-center gap-1">
+            <p className="font-display italic text-lg sm:text-xl text-burgundy font-medium">
               See you in Rajkot.
             </p>
-            <p className="font-creative text-base sm:text-lg tracking-widest text-gold-deep font-semibold mt-1">
+            <p className="font-creative text-base sm:text-lg tracking-widest text-burgundy font-bold mt-0.5">
               P &times; N
             </p>
-            <p className="text-[0.6rem] uppercase tracking-[0.3em] text-warmgrey font-medium mt-0.5">
+            <p className="text-[0.62rem] uppercase tracking-[0.3em] text-burgundy/80 font-bold mt-0.5">
               24 &mdash; 25 &middot; 02 &middot; 27
             </p>
           </div>

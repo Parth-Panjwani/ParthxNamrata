@@ -362,6 +362,56 @@ function AdminPage() {
               </div>
             </section>
 
+            {/* Day Breakdown Bar */}
+            {responses.length > 0 && (
+              <div className="mt-3 rounded-xl border border-gold/30 bg-card p-3 sm:p-4 shadow-sm">
+                <p className="text-[0.58rem] sm:text-[0.62rem] uppercase tracking-[0.18em] font-semibold text-warmgrey mb-2">
+                  Day Attendance Breakdown
+                </p>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  {[
+                    {
+                      label: "Both Days",
+                      count: responses.filter(
+                        (r) =>
+                          (r.attendance === "yes" || r.attendance === "some") &&
+                          r.attending_days === "both",
+                      ).length,
+                      sub: "24 & 25 Feb",
+                    },
+                    {
+                      label: "Day 1 Only",
+                      count: responses.filter(
+                        (r) =>
+                          (r.attendance === "yes" || r.attendance === "some") &&
+                          r.attending_days === "24",
+                      ).length,
+                      sub: "Carnival · Sur Sandhya",
+                    },
+                    {
+                      label: "Day 2 Only",
+                      count: responses.filter(
+                        (r) =>
+                          (r.attendance === "yes" || r.attendance === "some") &&
+                          r.attending_days === "25",
+                      ).length,
+                      sub: "Wedding · Reception",
+                    },
+                  ].map((item) => (
+                    <div key={item.label} className="rounded-lg border border-gold/20 bg-ivory/60 p-2">
+                      <p className="font-display text-lg sm:text-xl font-medium text-burgundy tabular-nums">
+                        {item.count}
+                      </p>
+                      <p className="text-[0.58rem] font-semibold text-gold-deep uppercase tracking-[0.12em]">
+                        {item.label}
+                      </p>
+                      <p className="text-[0.58rem] text-warmgrey mt-0.5">{item.sub}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Navigation Tabs */}
             <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 border-b border-gold/30 pb-3">
               <div className="grid grid-cols-2 sm:flex gap-1.5 sm:gap-2">
@@ -738,9 +788,9 @@ function AdminPage() {
                           }
                           className="mt-1.5 w-full rounded-xl border border-gold/40 bg-ivory px-3.5 py-2.5 text-xs sm:text-sm text-charcoal outline-none focus:border-gold"
                         >
-                          <option value="both">Both Days (24 & 25 Feb)</option>
-                          <option value="24">24th Feb (Day 1)</option>
-                          <option value="25">25th Feb (Day 2)</option>
+                          <option value="both">Both Days — 24 & 25 Feb</option>
+                          <option value="24">24 Feb — Carnival & Sur Sandhya</option>
+                          <option value="25">25 Feb — Wedding & Reception</option>
                         </select>
                       </div>
                       <div>

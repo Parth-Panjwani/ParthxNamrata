@@ -49,31 +49,32 @@ export function Crest({ className = "", width = 210 }: { className?: string; wid
   );
 }
 
-/** Corner filigree for framed cards. */
+/** Corner filigree for framed cards with proportional inset and proper rounding. */
 export function CornerFlourishes() {
   return (
     <>
       {(
         [
-          ["top-2 left-2", ""],
-          ["top-2 right-2", "scale-x-[-1]"],
-          ["bottom-2 left-2", "scale-y-[-1]"],
-          ["bottom-2 right-2", "scale-[-1]"],
+          ["top-3 left-3", ""],
+          ["top-3 right-3", "scale-x-[-1]"],
+          ["bottom-3 left-3", "scale-y-[-1]"],
+          ["bottom-3 right-3", "scale-[-1]"],
         ] as const
       ).map(([pos, flip]) => (
         <svg
           key={pos}
-          viewBox="0 0 60 60"
-          className={`pointer-events-none absolute h-8 w-8 text-gold/70 ${pos} ${flip}`}
+          viewBox="0 0 40 40"
+          className={`pointer-events-none absolute h-6 w-6 text-gold-deep/60 ${pos} ${flip}`}
           aria-hidden="true"
         >
           <path
-            d="M2 26C2 12 12 2 26 2M2 34c8 0 14-2 18-6s6-10 6-18M10 44c10-1 17-4 22-9s8-12 9-22"
+            d="M 2 20 C 2 10 10 2 20 2 M 2 12 C 2 7 7 2 12 2 M 6 6 L 14 14"
             fill="none"
             stroke="currentColor"
-            strokeWidth="1"
+            strokeWidth="1.2"
+            strokeLinecap="round"
           />
-          <circle cx="44" cy="16" r="1.6" fill="currentColor" />
+          <circle cx="2" cy="2" r="1.5" fill="currentColor" />
         </svg>
       ))}
     </>
@@ -81,22 +82,37 @@ export function CornerFlourishes() {
 }
 
 const PETALS = [
-  { left: "6%", delay: 0, dur: 15, size: 13, drift: "9vw", o: 0.5 },
-  { left: "22%", delay: 3.4, dur: 18, size: 10, drift: "-6vw", o: 0.38 },
-  { left: "38%", delay: 7.1, dur: 16, size: 15, drift: "12vw", o: 0.45 },
-  { left: "54%", delay: 1.8, dur: 19, size: 11, drift: "-10vw", o: 0.33 },
-  { left: "69%", delay: 9.6, dur: 17, size: 14, drift: "7vw", o: 0.42 },
-  { left: "84%", delay: 5.2, dur: 20, size: 9, drift: "-8vw", o: 0.3 },
-  { left: "94%", delay: 12, dur: 16, size: 12, drift: "-14vw", o: 0.36 },
+  { left: "4%", delay: 0, dur: 14, size: 13, drift: "7vw", o: 0.55 },
+  { left: "18%", delay: 3.2, dur: 18, size: 11, drift: "-6vw", o: 0.42 },
+  { left: "32%", delay: 6.8, dur: 16, size: 15, drift: "10vw", o: 0.48 },
+  { left: "48%", delay: 1.5, dur: 19, size: 12, drift: "-9vw", o: 0.38 },
+  { left: "64%", delay: 9.1, dur: 17, size: 14, drift: "8vw", o: 0.46 },
+  { left: "78%", delay: 4.8, dur: 20, size: 10, drift: "-7vw", o: 0.35 },
+  { left: "92%", delay: 11.4, dur: 16, size: 13, drift: "-11vw", o: 0.4 },
 ];
 
-/** Slow floating rose petals — ambient, never distracting. */
+const GOLD_DUST = [
+  { left: "10%", top: "15%", delay: 0.5, dur: 4.2, size: 3 },
+  { left: "25%", top: "45%", delay: 1.8, dur: 5.1, size: 4 },
+  { left: "40%", top: "25%", delay: 2.4, dur: 3.8, size: 2.5 },
+  { left: "60%", top: "70%", delay: 0.9, dur: 4.6, size: 3.5 },
+  { left: "75%", top: "35%", delay: 3.1, dur: 5.5, size: 2.5 },
+  { left: "88%", top: "60%", delay: 1.2, dur: 4.0, size: 3 },
+  { left: "15%", top: "85%", delay: 2.7, dur: 4.9, size: 4 },
+  { left: "92%", top: "18%", delay: 2.1, dur: 3.7, size: 2.5 },
+];
+
+/** Slow floating rose petals & twinkling gold starlight — ambient & deeply atmospheric. */
 export function PetalField() {
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
+      {/* Soft Ambient Radiance in Background */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[90vw] max-w-4xl h-[450px] bg-[radial-gradient(ellipse_at_top,rgba(229,193,88,0.18)_0%,rgba(103,18,36,0.08)_50%,transparent_80%)] blur-3xl pointer-events-none" />
+
+      {/* Floating Petals */}
       {PETALS.map((p, i) => (
         <span
-          key={i}
+          key={`petal-${i}`}
           className="petal"
           style={{
             left: p.left,
@@ -108,14 +124,30 @@ export function PetalField() {
             ["--drift" as string]: p.drift,
           }}
         >
-          <svg viewBox="0 0 20 30" className="h-full w-full text-rose">
+          <svg viewBox="0 0 20 30" className="h-full w-full text-rose drop-shadow-[0_2px_4px_rgba(103,18,36,0.25)]">
             <path
               d="M10 0C15 8 20 14 20 20c0 6-4.5 10-10 10S0 26 0 20C0 14 5 8 10 0Z"
               fill="currentColor"
-              opacity="0.55"
+              opacity="0.65"
             />
           </svg>
         </span>
+      ))}
+
+      {/* Twinkling Gold Fireflies / Stardust */}
+      {GOLD_DUST.map((d, i) => (
+        <span
+          key={`dust-${i}`}
+          className="sparkle-dot"
+          style={{
+            left: d.left,
+            top: d.top,
+            width: `${d.size}px`,
+            height: `${d.size}px`,
+            animationDelay: `${d.delay}s`,
+            animationDuration: `${d.dur}s`,
+          }}
+        />
       ))}
     </div>
   );

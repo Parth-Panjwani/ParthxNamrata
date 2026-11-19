@@ -33,12 +33,12 @@ export function Countdown() {
       {UNITS.map((unit, i) => (
         <div
           key={unit}
-          className="hairline-gold relative bg-ivory/70 px-1 py-3 text-center sm:py-4"
+          className="rounded-xl border border-gold/45 bg-[#FBF7F0] px-1 py-2.5 text-center shadow-xs"
         >
-          <div className="font-display text-2xl leading-none text-burgundy tabular-nums sm:text-3xl">
+          <div className="font-display text-xl sm:text-2xl font-bold leading-none text-burgundy tabular-nums">
             {String(values[i]).padStart(2, "0")}
           </div>
-          <div className="mt-1.5 text-[0.5rem] uppercase tracking-[0.22em] text-warmgrey sm:text-[0.6rem]">
+          <div className="mt-1 text-[0.55rem] sm:text-[0.6rem] uppercase tracking-[0.2em] text-burgundy/80 font-bold">
             {unit}
           </div>
         </div>
