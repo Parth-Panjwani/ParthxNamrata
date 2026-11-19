@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,6 +16,7 @@ import {
   MapPin,
   Plane,
   Train,
+  X,
 } from "lucide-react";
 import { submitRsvp, updateRsvp, checkRsvpExists } from "@/lib/rsvp.functions";
 import { CornerFlourishes, Divider } from "./Ornaments";
@@ -1322,6 +1323,21 @@ function formatEventsDisplay(raw?: string) {
   return parts.length > 0 ? parts.join(", ") : "All Celebrations";
 }
 
+function formatDisplayDate(val?: string) {
+  if (!val) return "";
+  const match = val.match(/^2027-02-(\d{1,2})$/);
+  if (match) {
+    const day = parseInt(match[1], 10);
+    if (day === 24) return "Wed, 24 Feb 2027 · Day 1";
+    if (day === 25) return "Thu, 25 Feb 2027 · Day 2";
+    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const d = new Date(2027, 1, day);
+    const dayName = dayNames[d.getDay()];
+    return `${dayName}, ${day} Feb 2027`;
+  }
+  return val;
+}
+
 export function RsvpSection() {
   const submit = useServerFn(submitRsvp);
   const update = useServerFn(updateRsvp);
@@ -1330,6 +1346,8 @@ export function RsvpSection() {
   const [editing, setEditing] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [selectedEvents, setSelectedEvents] = useState<string[]>(ALL_EVENT_IDS);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const calendarRef = useRef<HTMLDivElement>(null);
 
   const {
     register,
@@ -1353,6 +1371,22 @@ export function RsvpSection() {
       message: "",
     },
   });
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        calendarRef.current &&
+        !calendarRef.current.contains(e.target as Node)
+      ) {
+        setShowCalendar(false);
+      }
+    }
+    if (showCalendar) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showCalendar]);
 
   useEffect(() => {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -1400,6 +1434,7 @@ export function RsvpSection() {
   const childrenCount = watch("children");
   const travelMode = watch("travelMode");
   const travelCity = watch("travelCity") || "";
+  const arrivalDate = watch("arrivalDate") || "";
 
   // Dynamic suggestions: Only show while typing (no static chips when empty)
   const matchingCities = useMemo(() => {
@@ -2019,32 +2054,173 @@ export function RsvpSection() {
                   )}
                 </div>
 
-                {/* Arrival Date (Calendar) & Time (Clock) - Fully mobile responsive without WebKit overflow */}
+                {/* Arrival Date (Calendar - Strictly February 2027) & Time (Clock) */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full min-w-0 max-w-full">
-                  <div className="w-full min-w-0 max-w-full">
-                    <label className={labelClass} htmlFor="arrivalDate">
+                  <div
+                    className="relative w-full min-w-0 max-w-full"
+                    ref={calendarRef}
+                  >
+                    <label className={labelClass} htmlFor="arrivalDateTrigger">
                       Arrival Date
                     </label>
                     <div className="relative w-full min-w-0 max-w-full">
-                      <div className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gold-deep z-10">
+                      <button
+                        type="button"
+                        id="arrivalDateTrigger"
+                        onClick={() => setShowCalendar((prev) => !prev)}
+                        className={`${fieldClass} pl-10 pr-9 text-left flex items-center justify-between cursor-pointer min-h-[46px]`}
+                      >
+                        <span
+                          className={`truncate text-[0.88rem] ${
+                            arrivalDate
+                              ? "text-charcoal font-medium"
+                              : "text-warmgrey/50"
+                          }`}
+                        >
+                          {formatDisplayDate(arrivalDate) ||
+                            "Select date in Feb 2027"}
+                        </span>
+                      </button>
+
+                      <div
+                        onClick={() => setShowCalendar((prev) => !prev)}
+                        className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gold-deep z-10"
+                      >
                         <Calendar size={15} />
                       </div>
-                      <input
-                        type="date"
-                        id="arrivalDate"
-                        min="2027-02-20"
-                        max="2027-02-28"
-                        style={{
-                          WebkitAppearance: "none",
-                          minWidth: 0,
-                          maxWidth: "100%",
-                          width: "100%",
-                          boxSizing: "border-box",
-                        }}
-                        className={`${fieldClass} pl-10 block box-border min-w-0 max-w-full cursor-pointer [&::-webkit-date-and-time-value]:text-left [&::-webkit-date-and-time-value]:min-w-0 [&::-webkit-date-and-time-value]:overflow-hidden [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-70 [&::-webkit-calendar-picker-indicator]:hover:opacity-100`}
-                        {...register("arrivalDate")}
-                      />
+
+                      {arrivalDate && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setValue("arrivalDate", "", {
+                              shouldValidate: true,
+                            });
+                          }}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-warmgrey hover:text-burgundy p-1 cursor-pointer"
+                          title="Clear date"
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
                     </div>
+
+                    {/* February 2027 ONLY Calendar Popover */}
+                    {showCalendar && (
+                      <div className="absolute left-0 right-0 sm:left-0 sm:right-auto top-full z-40 mt-1.5 w-full sm:w-[310px] rounded-2xl border border-gold/50 bg-ivory p-3.5 sm:p-4 shadow-2xl space-y-3">
+                        <div className="flex items-center justify-between border-b border-gold/25 pb-2">
+                          <div>
+                            <p className="font-creative text-base font-bold text-burgundy">
+                              February 2027
+                            </p>
+                            <p className="text-[0.62rem] text-gold-deep uppercase tracking-wider">
+                              Celebrations: 24 & 25 Feb
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setShowCalendar(false)}
+                            className="rounded-lg p-1 text-warmgrey hover:bg-gold/15 hover:text-burgundy cursor-pointer"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+
+                        {/* Weekday headers */}
+                        <div className="grid grid-cols-7 gap-1 text-center text-[0.64rem] uppercase font-semibold text-gold-deep">
+                          <span>Mo</span>
+                          <span>Tu</span>
+                          <span>We</span>
+                          <span>Th</span>
+                          <span>Fr</span>
+                          <span>Sa</span>
+                          <span>Su</span>
+                        </div>
+
+                        {/* 28 Days of February 2027 (Feb 1 was Monday!) */}
+                        <div className="grid grid-cols-7 gap-1">
+                          {Array.from({ length: 28 }, (_, i) => i + 1).map(
+                            (d) => {
+                              const dateStr = `2027-02-${String(d).padStart(2, "0")}`;
+                              const isSelected = arrivalDate === dateStr;
+                              const isWeddingDay = d === 24 || d === 25;
+
+                              return (
+                                <button
+                                  key={d}
+                                  type="button"
+                                  onClick={() => {
+                                    setValue("arrivalDate", dateStr, {
+                                      shouldValidate: true,
+                                    });
+                                    setShowCalendar(false);
+                                  }}
+                                  className={`relative flex flex-col items-center justify-center h-8 sm:h-9 rounded-lg text-xs transition-all cursor-pointer ${
+                                    isSelected
+                                      ? "bg-gradient-to-r from-[#8B1A2D] via-[#671224] to-[#480A17] text-ivory font-bold shadow-md border border-[#E5C158]"
+                                      : isWeddingDay
+                                        ? "border border-gold/80 bg-gold/20 font-bold text-burgundy hover:bg-gold/30"
+                                        : "border border-gold/15 bg-ivory/80 text-charcoal hover:border-gold/60 hover:bg-ivory-deep"
+                                  }`}
+                                >
+                                  <span>{d}</span>
+                                  {isWeddingDay && (
+                                    <span
+                                      className={`absolute bottom-0.5 h-1 w-1 rounded-full ${
+                                        isSelected
+                                          ? "bg-gold-light"
+                                          : "bg-burgundy"
+                                      }`}
+                                    />
+                                  )}
+                                </button>
+                              );
+                            },
+                          )}
+                        </div>
+
+                        {/* Quick Picks for Wedding Events */}
+                        <div className="pt-2 border-t border-gold/20 flex flex-wrap items-center justify-between gap-1.5 text-[0.62rem]">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setValue("arrivalDate", "2027-02-24", {
+                                shouldValidate: true,
+                              });
+                              setShowCalendar(false);
+                            }}
+                            className="rounded-md border border-gold/40 bg-ivory-deep/80 px-2 py-1 font-medium text-burgundy hover:bg-gold/20 cursor-pointer"
+                          >
+                            24 Feb (Day 1)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setValue("arrivalDate", "2027-02-25", {
+                                shouldValidate: true,
+                              });
+                              setShowCalendar(false);
+                            }}
+                            className="rounded-md border border-gold/40 bg-ivory-deep/80 px-2 py-1 font-medium text-burgundy hover:bg-gold/20 cursor-pointer"
+                          >
+                            25 Feb (Day 2)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setValue("arrivalDate", "", {
+                                shouldValidate: true,
+                              });
+                              setShowCalendar(false);
+                            }}
+                            className="text-warmgrey hover:text-burgundy px-1 py-1 cursor-pointer"
+                          >
+                            Clear
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="w-full min-w-0 max-w-full">

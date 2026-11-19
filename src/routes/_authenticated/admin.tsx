@@ -1858,6 +1858,8 @@ function EditRsvpModalDialog({
               </label>
               <input
                 type="date"
+                min="2027-02-01"
+                max="2027-02-28"
                 value={form.arrival_date || ""}
                 onChange={(e) =>
                   setForm({ ...form, arrival_date: e.target.value || null })
@@ -2160,6 +2162,8 @@ function AddRsvpModalDialog({
               </label>
               <input
                 type="date"
+                min="2027-02-01"
+                max="2027-02-28"
                 value={arrivalDate}
                 onChange={(e) => setArrivalDate(e.target.value)}
                 className="w-full rounded-xl border border-gold/40 bg-card px-2.5 py-2 text-xs text-charcoal outline-none focus:border-gold"
