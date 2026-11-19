@@ -54,13 +54,22 @@
   --font-serif: "Cinzel", "Playfair Display", serif;
   --font-creative: "Cinzel Decorative", "Cinzel", "Playfair Display", serif;
   --font-script: "Great Vibes", "Pinyon Script", "Cormorant Garamond", cursive;
-  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, ui-sans-serif, system-ui, sans-serif;
+  --font-sans:
+    "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, ui-sans-serif,
+    system-ui, sans-serif;
 
-  --shadow-paper: 0 1px 2px oklch(0.31 0 0 / 0.05), 0 18px 40px -18px oklch(0.372 0.12 15 / 0.22);
-  --shadow-lift: 0 2px 4px oklch(0.31 0 0 / 0.04), 0 34px 70px -28px oklch(0.372 0.12 15 / 0.3);
+  --shadow-paper:
+    0 1px 2px oklch(0.31 0 0 / 0.05),
+    0 18px 40px -18px oklch(0.372 0.12 15 / 0.22);
+  --shadow-lift:
+    0 2px 4px oklch(0.31 0 0 / 0.04),
+    0 34px 70px -28px oklch(0.372 0.12 15 / 0.3);
   --shadow-envelope:
-    0 30px 60px -20px oklch(0.28 0.09 15 / 0.45), 0 8px 18px -8px oklch(0.28 0.09 15 / 0.4);
-  --shadow-foil: 0 0 0 1px oklch(0.71 0.107 82 / 0.45), 0 8px 24px -12px oklch(0.71 0.107 82 / 0.5);
+    0 30px 60px -20px oklch(0.28 0.09 15 / 0.45),
+    0 8px 18px -8px oklch(0.28 0.09 15 / 0.4);
+  --shadow-foil:
+    0 0 0 1px oklch(0.71 0.107 82 / 0.45),
+    0 8px 24px -12px oklch(0.71 0.107 82 / 0.5);
 }
 
 :root {
@@ -181,8 +190,16 @@
 @utility paper {
   background-color: var(--card);
   background-image:
-    radial-gradient(circle at 18% 12%, oklch(0.99 0.014 88 / 0.9) 0%, transparent 55%),
-    radial-gradient(circle at 82% 88%, oklch(0.93 0.024 78 / 0.55) 0%, transparent 60%);
+    radial-gradient(
+      circle at 18% 12%,
+      oklch(0.99 0.014 88 / 0.9) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 82% 88%,
+      oklch(0.93 0.024 78 / 0.55) 0%,
+      transparent 60%
+    );
   box-shadow: var(--shadow-paper);
 }
 
@@ -302,9 +319,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(150deg, #8B1A2D 0%, #671224 55%, #460814 100%);
-  color: #FFFBF2;
-  border: 1.5px solid #E5C158;
+  background: linear-gradient(150deg, #8b1a2d 0%, #671224 55%, #460814 100%);
+  color: #fffbf2;
+  border: 1.5px solid #e5c158;
   border-radius: 0.85rem;
   padding: 0.9rem 2.25rem;
   font-family: var(--font-sans);
@@ -312,7 +329,7 @@
   font-weight: 600;
   letter-spacing: 0.28em;
   text-transform: uppercase;
-  box-shadow: 
+  box-shadow:
     0 8px 22px -4px rgba(103, 18, 36, 0.45),
     0 2px 4px rgba(0, 0, 0, 0.2),
     inset 0 1.5px 2.5px rgba(255, 244, 194, 0.4),
@@ -322,8 +339,8 @@
 
   &:hover:not(:disabled) {
     transform: translateY(-2px) scale(1.02);
-    border-color: #F7DF94;
-    box-shadow: 
+    border-color: #f7df94;
+    box-shadow:
       0 12px 30px -4px rgba(103, 18, 36, 0.6),
       0 0 22px rgba(229, 193, 88, 0.45),
       inset 0 1.5px 3.5px rgba(255, 255, 255, 0.6);
@@ -331,7 +348,7 @@
 
   &:active:not(:disabled) {
     transform: translateY(1px) scale(0.98);
-    box-shadow: 
+    box-shadow:
       0 4px 10px rgba(103, 18, 36, 0.4),
       inset 0 2.5px 6px rgba(0, 0, 0, 0.6);
   }
@@ -342,7 +359,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(150deg, #FAF4E8 0%, #F1E2CD 100%);
+  background: linear-gradient(150deg, #faf4e8 0%, #f1e2cd 100%);
   color: #671224;
   border: 1.5px solid rgba(212, 175, 55, 0.75);
   border-radius: 0.85rem;
@@ -352,7 +369,7 @@
   font-weight: 600;
   letter-spacing: 0.28em;
   text-transform: uppercase;
-  box-shadow: 
+  box-shadow:
     0 6px 18px -3px rgba(0, 0, 0, 0.08),
     0 2px 4px rgba(0, 0, 0, 0.04),
     inset 0 1.5px 3px rgba(255, 255, 255, 0.9),
@@ -362,10 +379,10 @@
 
   &:hover:not(:disabled) {
     transform: translateY(-2px) scale(1.02);
-    background: linear-gradient(150deg, #FFFFFF 0%, #F5E8D4 100%);
-    border-color: #D4AF37;
+    background: linear-gradient(150deg, #ffffff 0%, #f5e8d4 100%);
+    border-color: #d4af37;
     color: #460814;
-    box-shadow: 
+    box-shadow:
       0 10px 24px -4px rgba(103, 18, 36, 0.18),
       0 0 18px rgba(212, 175, 55, 0.35),
       inset 0 1.5px 4px rgba(255, 255, 255, 1);
@@ -373,7 +390,7 @@
 
   &:active:not(:disabled) {
     transform: translateY(1px) scale(0.98);
-    box-shadow: 
+    box-shadow:
       0 2px 6px rgba(0, 0, 0, 0.05),
       inset 0 2px 4px rgba(0, 0, 0, 0.12);
   }
@@ -391,17 +408,29 @@
 }
 
 @keyframes goldShimmer {
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
 }
 
 @keyframes gentlePulse {
-  0%, 100% { opacity: 0.65; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.04); }
+  0%,
+  100% {
+    opacity: 0.65;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
 }
 
 @keyframes starTwinkle {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.15;
     transform: scale(0.6) translateY(0);
   }
@@ -413,14 +442,19 @@
 }
 
 @keyframes floatGentle {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-7px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
 }
 
 @utility sparkle-dot {
   position: absolute;
   border-radius: 9999px;
-  background-color: #F7DF94;
+  background-color: #f7df94;
   box-shadow: 0 0 6px 1px rgba(212, 175, 55, 0.6);
   animation: starTwinkle ease-in-out infinite;
   pointer-events: none;
@@ -452,7 +486,8 @@
 
 @utility red-palace-silhouette {
   /* Converts dark/gold linework image into rich royal red / deep burgundy */
-  filter: invert(18%) sepia(85%) saturate(3500%) hue-rotate(335deg) brightness(85%) contrast(110%);
+  filter: invert(18%) sepia(85%) saturate(3500%) hue-rotate(335deg)
+    brightness(85%) contrast(110%);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -15,7 +15,9 @@ export function VenueSection() {
   return (
     <section id="venue" className="canvas relative pb-14 sm:pb-20">
       <header className="flex flex-col items-center text-center">
-        <span className="eyebrow tracking-royal mb-1 text-gold-deep">The Destination</span>
+        <span className="eyebrow tracking-royal mb-1 text-gold-deep">
+          The Destination
+        </span>
         <h2 className="font-creative text-2xl sm:text-3xl font-bold tracking-widest text-burgundy uppercase">
           The Venue
         </h2>
@@ -66,7 +68,9 @@ export function VenueSection() {
               rel="noreferrer"
               className="btn-3d-primary inline-flex items-center justify-center gap-2 !px-7 !py-3 text-[0.68rem] tracking-[0.22em] whitespace-nowrap"
             >
-              <span className="relative z-10 whitespace-nowrap">View Location</span>
+              <span className="relative z-10 whitespace-nowrap">
+                View Location
+              </span>
               <ArrowUpRight size={13} strokeWidth={2.4} />
             </a>
           </div>

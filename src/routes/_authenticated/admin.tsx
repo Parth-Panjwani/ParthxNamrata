@@ -17,6 +17,11 @@ import {
   Clock,
   UserCheck,
   Calendar,
+  Car,
+  Plane,
+  Train,
+  Bus,
+  MapPin,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -33,9 +38,15 @@ export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [
       { title: "RSVP Dashboard — Parth & Namrata" },
-      { name: "description", content: "Track RSVPs, invitation groups and guest counts." },
+      {
+        name: "description",
+        content: "Track RSVPs, invitation groups and guest counts.",
+      },
       { property: "og:title", content: "RSVP Dashboard — Parth & Namrata" },
-      { property: "og:description", content: "Track RSVPs and invitation groups." },
+      {
+        property: "og:description",
+        content: "Track RSVPs and invitation groups.",
+      },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -49,7 +60,11 @@ type Response = {
   attendance: "yes" | "some" | "no" | "unsure";
   adults: number;
   children: number;
-  attending_days: "24" | "25" | "both";
+  attending_days: string;
+  travel_mode: string | null;
+  travel_city: string | null;
+  arrival_date: string | null;
+  arrival_time?: string | null;
   message: string | null;
   created_at: string;
 };
@@ -72,7 +87,9 @@ function AdminPage() {
   const removeGroup = useServerFn(deleteInvitationGroup);
   const removeResponse = useServerFn(deleteRsvpResponse);
 
-  const [activeTab, setActiveTab] = useState<"responses" | "groups">("responses");
+  const [activeTab, setActiveTab] = useState<"responses" | "groups">(
+    "responses",
+  );
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<string>("all");
   const [showForm, setShowForm] = useState(false);
@@ -108,28 +125,46 @@ function AdminPage() {
 
   const destroy = useMutation({
     mutationFn: (id: string) => removeGroup({ data: { id } }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-overview"] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["admin-overview"] }),
   });
 
   const destroyResponse = useMutation({
     mutationFn: (id: string) => removeResponse({ data: { id } }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-overview"] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["admin-overview"] }),
   });
 
-  const responses = (data?.responses ?? []) as Response[];
-  const groups = (data?.groups ?? []) as Group[];
+  const responses = useMemo(
+    () => (data?.responses ?? []) as Response[],
+    [data?.responses],
+  );
+  const groups = useMemo(() => (data?.groups ?? []) as Group[], [data?.groups]);
 
   const summary = useMemo(() => {
-    const attendingList = responses.filter((r) => r.attendance === "yes" || r.attendance === "some");
+    const attendingList = responses.filter(
+      (r) => r.attendance === "yes" || r.attendance === "some",
+    );
     const totalHeads = attendingList.reduce(
       (sum, r) => sum + (Number(r.adults) || 0) + (Number(r.children) || 0),
       0,
     );
-    const totalAdults = attendingList.reduce((sum, r) => sum + (Number(r.adults) || 0), 0);
-    const totalChildren = attendingList.reduce((sum, r) => sum + (Number(r.children) || 0), 0);
+    const totalAdults = attendingList.reduce(
+      (sum, r) => sum + (Number(r.adults) || 0),
+      0,
+    );
+    const totalChildren = attendingList.reduce(
+      (sum, r) => sum + (Number(r.children) || 0),
+      0,
+    );
     const declinedCount = responses.filter((r) => r.attendance === "no").length;
-    const unsureCount = responses.filter((r) => r.attendance === "unsure").length;
-    const totalInvited = groups.reduce((sum, g) => sum + (Number(g.guest_count) || 0), 0);
+    const unsureCount = responses.filter(
+      (r) => r.attendance === "unsure",
+    ).length;
+    const totalInvited = groups.reduce(
+      (sum, g) => sum + (Number(g.guest_count) || 0),
+      0,
+    );
 
     return {
       totalResponses: responses.length,
@@ -145,6 +180,47 @@ function AdminPage() {
     };
   }, [responses, groups]);
 
+  const eventBreakdown = useMemo(() => {
+    const counts = {
+      carnival: 0,
+      sur_sandhya: 0,
+      wedding: 0,
+      reception: 0,
+    };
+    for (const r of responses) {
+      if (r.attendance === "yes" || r.attendance === "some") {
+        const evs = parseEventsList(r.attending_days);
+        const pax = (Number(r.adults) || 1) + (Number(r.children) || 0);
+        if (evs.includes("carnival")) counts.carnival += pax;
+        if (evs.includes("sur_sandhya")) counts.sur_sandhya += pax;
+        if (evs.includes("wedding")) counts.wedding += pax;
+        if (evs.includes("reception")) counts.reception += pax;
+      }
+    }
+    return counts;
+  }, [responses]);
+
+  const travelBreakdown = useMemo(() => {
+    const counts: Record<string, number> = {
+      Car: 0,
+      Flight: 0,
+      Train: 0,
+      Bus: 0,
+      Other: 0,
+    };
+    for (const r of responses) {
+      if (r.attendance === "yes" || r.attendance === "some") {
+        const mode = r.travel_mode?.trim();
+        if (mode && counts[mode] !== undefined) {
+          counts[mode]++;
+        } else if (mode) {
+          counts.Other++;
+        }
+      }
+    }
+    return counts;
+  }, [responses]);
+
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
     return responses.filter((r) => {
@@ -153,10 +229,58 @@ function AdminPage() {
         !q ||
         r.full_name.toLowerCase().includes(q) ||
         r.mobile.includes(q) ||
+        (r.travel_mode ?? "").toLowerCase().includes(q) ||
+        (r.travel_city ?? "").toLowerCase().includes(q) ||
+        (r.arrival_date ?? "").toLowerCase().includes(q) ||
+        (r.attending_days ?? "").toLowerCase().includes(q) ||
         (r.message ?? "").toLowerCase().includes(q);
       return matchesFilter && matchesSearch;
     });
   }, [responses, search, filter]);
+
+  function parseEventsList(raw?: string | null): string[] {
+    if (!raw) return [];
+    if (raw === "all" || raw === "both") {
+      return ["carnival", "sur_sandhya", "wedding", "reception"];
+    }
+    if (raw === "24") return ["carnival", "sur_sandhya"];
+    if (raw === "25") return ["wedding", "reception"];
+    return raw
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
+  }
+
+  function renderEventBadges(raw?: string | null) {
+    const events = parseEventsList(raw);
+    if (events.length === 0) {
+      return <span className="text-warmgrey text-xs">&mdash;</span>;
+    }
+
+    const eventMeta: Record<string, { label: string; icon: string }> = {
+      carnival: { label: "Carnival", icon: "🎪" },
+      sur_sandhya: { label: "Sur Sandhya", icon: "✨" },
+      wedding: { label: "Wedding", icon: "💍" },
+      reception: { label: "Reception", icon: "🥂" },
+    };
+
+    return (
+      <div className="flex flex-wrap gap-1 max-w-[200px]">
+        {events.map((id) => {
+          const info = eventMeta[id] ?? { label: id, icon: "🎉" };
+          return (
+            <span
+              key={id}
+              className="inline-flex items-center gap-1 rounded-md bg-ivory-deep/80 border border-gold/30 px-1.5 py-0.5 text-[0.66rem] font-medium text-burgundy whitespace-nowrap"
+            >
+              <span>{info.icon}</span>
+              <span>{info.label}</span>
+            </span>
+          );
+        })}
+      </div>
+    );
+  }
 
   function exportCsv() {
     const header = [
@@ -166,7 +290,11 @@ function AdminPage() {
       "Adults",
       "Children",
       "Total Pax",
-      "Attending Days",
+      "Events Attending",
+      "Travel Mode",
+      "Travelling From",
+      "Arrival Date",
+      "Arrival Time",
       "Message / Wishes",
       "Submitted At",
     ];
@@ -178,16 +306,24 @@ function AdminPage() {
       r.adults || 0,
       r.children || 0,
       (Number(r.adults) || 0) + (Number(r.children) || 0),
-      daysLabel(r.attending_days),
+      parseEventsList(r.attending_days).join(", ") || "All",
+      r.travel_mode || "-",
+      r.travel_city || "-",
+      r.arrival_date || "-",
+      r.arrival_time || "-",
       (r.message ?? "").replace(/\s+/g, " "),
       new Date(r.created_at).toLocaleString(),
     ]);
 
     const csv = [header, ...rows]
-      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+      .map((row) =>
+        row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","),
+      )
       .join("\n");
 
-    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const url = URL.createObjectURL(
+      new Blob([csv], { type: "text/csv;charset=utf-8" }),
+    );
     const link = document.createElement("a");
     link.href = url;
     link.download = `parth-namrata-rsvps-${new Date().toISOString().slice(0, 10)}.csv`;
@@ -209,6 +345,47 @@ function AdminPage() {
 
   function getCleanPhone(raw: string) {
     return raw.replace(/[^0-9+]/g, "");
+  }
+
+  function renderTravelBadge(
+    mode: string | null,
+    city?: string | null,
+    date?: string | null,
+    time?: string | null,
+  ) {
+    if (!mode && !city && !date && !time) return null;
+
+    let icon = <MapPin size={11} className="shrink-0 text-gold-deep" />;
+    if (mode === "Car") {
+      icon = <Car size={11} className="shrink-0 text-amber-700" />;
+    } else if (mode === "Flight") {
+      icon = <Plane size={11} className="shrink-0 text-sky-700" />;
+    } else if (mode === "Train") {
+      icon = <Train size={11} className="shrink-0 text-indigo-700" />;
+    } else if (mode === "Bus") {
+      icon = <Bus size={11} className="shrink-0 text-emerald-700" />;
+    }
+
+    return (
+      <div className="flex flex-col gap-0.5 text-left">
+        {mode && (
+          <span className="inline-flex items-center gap-1 rounded-md bg-ivory-deep/80 border border-gold/30 px-2 py-0.5 text-[0.7rem] font-medium text-burgundy w-fit">
+            {icon}
+            <span>{mode}</span>
+          </span>
+        )}
+        {city && (
+          <span className="text-[0.68rem] text-charcoal/85">
+            From: <strong className="font-medium text-burgundy">{city}</strong>
+          </span>
+        )}
+        {(date || time) && (
+          <span className="text-[0.64rem] text-warmgrey">
+            {date} {time ? `@ ${time}` : ""}
+          </span>
+        )}
+      </div>
+    );
   }
 
   function renderStatusBadge(attendance: string) {
@@ -271,7 +448,9 @@ function AdminPage() {
       <div className="mx-auto max-w-6xl px-3.5 pt-5 sm:px-6">
         {error && (
           <div className="mb-5 rounded-xl border border-destructive/40 bg-destructive/5 p-3.5 text-xs sm:text-sm text-destructive">
-            {error instanceof Error ? error.message : "Could not load dashboard data."}
+            {error instanceof Error
+              ? error.message
+              : "Could not load dashboard data."}
           </div>
         )}
 
@@ -362,50 +541,126 @@ function AdminPage() {
               </div>
             </section>
 
-            {/* Day Breakdown Bar */}
+            {/* Event Attendance Breakdown Bar */}
             {responses.length > 0 && (
               <div className="mt-3 rounded-xl border border-gold/30 bg-card p-3 sm:p-4 shadow-sm">
-                <p className="text-[0.58rem] sm:text-[0.62rem] uppercase tracking-[0.18em] font-semibold text-warmgrey mb-2">
-                  Day Attendance Breakdown
-                </p>
-                <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[0.58rem] sm:text-[0.62rem] uppercase tracking-[0.18em] font-semibold text-warmgrey">
+                    Celebration Events Attendance (Guest Headcount)
+                  </p>
+                  <span className="text-[0.62rem] text-gold-deep font-medium">
+                    Eventwise guest counts
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
                   {[
                     {
-                      label: "Both Days",
-                      count: responses.filter(
-                        (r) =>
-                          (r.attendance === "yes" || r.attendance === "some") &&
-                          r.attending_days === "both",
-                      ).length,
-                      sub: "24 & 25 Feb",
+                      label: "Carnival",
+                      icon: "🎪",
+                      count: eventBreakdown.carnival,
+                      sub: "24 Feb · Morning",
                     },
                     {
-                      label: "Day 1 Only",
-                      count: responses.filter(
-                        (r) =>
-                          (r.attendance === "yes" || r.attendance === "some") &&
-                          r.attending_days === "24",
-                      ).length,
-                      sub: "Carnival · Sur Sandhya",
+                      label: "Sur Sandhya",
+                      icon: "✨",
+                      count: eventBreakdown.sur_sandhya,
+                      sub: "24 Feb · Sangeet",
                     },
                     {
-                      label: "Day 2 Only",
-                      count: responses.filter(
-                        (r) =>
-                          (r.attendance === "yes" || r.attendance === "some") &&
-                          r.attending_days === "25",
-                      ).length,
-                      sub: "Wedding · Reception",
+                      label: "The Wedding",
+                      icon: "💍",
+                      count: eventBreakdown.wedding,
+                      sub: "25 Feb · Pheras",
+                    },
+                    {
+                      label: "The Reception",
+                      icon: "🥂",
+                      count: eventBreakdown.reception,
+                      sub: "25 Feb · Dinner",
                     },
                   ].map((item) => (
-                    <div key={item.label} className="rounded-lg border border-gold/20 bg-ivory/60 p-2">
-                      <p className="font-display text-lg sm:text-xl font-medium text-burgundy tabular-nums">
-                        {item.count}
-                      </p>
-                      <p className="text-[0.58rem] font-semibold text-gold-deep uppercase tracking-[0.12em]">
+                    <div
+                      key={item.label}
+                      className="rounded-lg border border-gold/20 bg-ivory/60 p-2.5 flex flex-col items-center justify-center"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm">{item.icon}</span>
+                        <p className="font-display text-lg sm:text-xl font-medium text-burgundy tabular-nums">
+                          {item.count}
+                        </p>
+                      </div>
+                      <p className="text-[0.62rem] font-semibold text-gold-deep uppercase tracking-[0.12em] mt-0.5">
                         {item.label}
                       </p>
-                      <p className="text-[0.58rem] text-warmgrey mt-0.5">{item.sub}</p>
+                      <p className="text-[0.58rem] text-warmgrey mt-0.5">
+                        {item.sub}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Travel / Logistics Breakdown Bar */}
+            {responses.length > 0 && (
+              <div className="mt-3 rounded-xl border border-gold/30 bg-card p-3 sm:p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[0.58rem] sm:text-[0.62rem] uppercase tracking-[0.18em] font-semibold text-warmgrey">
+                    Guest Travel & Arrival Breakdown
+                  </p>
+                  <span className="text-[0.62rem] text-gold-deep font-medium">
+                    For guest pickup & arrangements
+                  </span>
+                </div>
+                <div className="grid grid-cols-5 gap-2 text-center">
+                  {[
+                    {
+                      label: "Car",
+                      icon: <Car size={13} className="text-amber-700" />,
+                      count: travelBreakdown.Car,
+                      sub: "Road / Taxi",
+                    },
+                    {
+                      label: "Flight",
+                      icon: <Plane size={13} className="text-sky-700" />,
+                      count: travelBreakdown.Flight,
+                      sub: "Air Arrival",
+                    },
+                    {
+                      label: "Train",
+                      icon: <Train size={13} className="text-indigo-700" />,
+                      count: travelBreakdown.Train,
+                      sub: "Rail Arrival",
+                    },
+                    {
+                      label: "Bus",
+                      icon: <Bus size={13} className="text-emerald-700" />,
+                      count: travelBreakdown.Bus,
+                      sub: "Bus / Coach",
+                    },
+                    {
+                      label: "Other",
+                      icon: <MapPin size={13} className="text-gold-deep" />,
+                      count: travelBreakdown.Other,
+                      sub: "Local / Other",
+                    },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className="rounded-lg border border-gold/20 bg-ivory/60 p-2 flex flex-col items-center justify-center"
+                    >
+                      <div className="flex items-center gap-1">
+                        {item.icon}
+                        <p className="font-display text-base sm:text-lg font-medium text-burgundy tabular-nums">
+                          {item.count}
+                        </p>
+                      </div>
+                      <p className="text-[0.58rem] font-semibold text-gold-deep uppercase tracking-[0.1em] mt-0.5">
+                        {item.label}
+                      </p>
+                      <p className="hidden xs:block text-[0.55rem] text-warmgrey">
+                        {item.sub}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -494,16 +749,24 @@ function AdminPage() {
 
                 {visible.length === 0 ? (
                   <div className="rounded-2xl border border-gold/30 bg-card p-8 sm:p-12 text-center text-warmgrey">
-                    <Users size={28} className="mx-auto text-gold-deep opacity-60 mb-2" />
-                    <p className="font-display text-base sm:text-lg text-burgundy">No responses match your search</p>
-                    <p className="text-xs text-warmgrey mt-1">Try changing your search term or filter selection.</p>
+                    <Users
+                      size={28}
+                      className="mx-auto text-gold-deep opacity-60 mb-2"
+                    />
+                    <p className="font-display text-base sm:text-lg text-burgundy">
+                      No responses match your search
+                    </p>
+                    <p className="text-xs text-warmgrey mt-1">
+                      Try changing your search term or filter selection.
+                    </p>
                   </div>
                 ) : (
                   <>
                     {/* MOBILE CARD VIEW (< 768px) */}
                     <div className="block md:hidden space-y-3">
                       {visible.map((r) => {
-                        const isAttending = r.attendance === "yes" || r.attendance === "some";
+                        const isAttending =
+                          r.attendance === "yes" || r.attendance === "some";
                         const cleanPhone = getCleanPhone(r.mobile);
 
                         return (
@@ -526,15 +789,34 @@ function AdminPage() {
 
                             {/* Attending Details Badges */}
                             {isAttending && (
-                              <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                                <span className="rounded-md border border-gold/30 bg-ivory-deep/70 px-2 py-0.5 text-[0.7rem] font-medium text-burgundy">
-                                  {daysLabel(r.attending_days)}
-                                </span>
-                                <span className="rounded-md border border-gold/30 bg-ivory-deep/70 px-2 py-0.5 text-[0.7rem] font-medium text-charcoal">
-                                  {r.adults} Adults{r.children ? ` · ${r.children} Kids` : ""}
-                                </span>
+                              <div className="space-y-1.5 pt-1">
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  {renderEventBadges(r.attending_days)}
+                                </div>
+                                <div>
+                                  <span className="rounded-md border border-gold/30 bg-ivory-deep/70 px-2 py-0.5 text-[0.7rem] font-medium text-charcoal">
+                                    {r.adults} Adults
+                                    {r.children ? ` · ${r.children} Kids` : ""}
+                                  </span>
+                                </div>
                               </div>
                             )}
+
+                            {/* Arrival / Travel Info */}
+                            {isAttending &&
+                              (r.travel_mode ||
+                                r.travel_city ||
+                                r.arrival_date ||
+                                r.arrival_time) && (
+                                <div className="rounded-lg border border-gold/25 bg-ivory-deep/40 p-2.5">
+                                  {renderTravelBadge(
+                                    r.travel_mode,
+                                    r.travel_city,
+                                    r.arrival_date,
+                                    r.arrival_time,
+                                  )}
+                                </div>
+                              )}
 
                             {/* Message / Wish */}
                             {r.message && (
@@ -546,10 +828,13 @@ function AdminPage() {
                             {/* Card Footer: Date + WhatsApp / Call / Delete Actions */}
                             <div className="flex items-center justify-between border-t border-gold/15 pt-2.5">
                               <span className="text-[0.65rem] text-warmgrey">
-                                {new Date(r.created_at).toLocaleDateString("en-IN", {
-                                  day: "numeric",
-                                  month: "short",
-                                })}
+                                {new Date(r.created_at).toLocaleDateString(
+                                  "en-IN",
+                                  {
+                                    day: "numeric",
+                                    month: "short",
+                                  },
+                                )}
                               </span>
 
                               <div className="flex items-center gap-1.5">
@@ -575,7 +860,11 @@ function AdminPage() {
                                   type="button"
                                   title="Delete RSVP"
                                   onClick={() => {
-                                    if (confirm(`Delete RSVP record for ${r.full_name}?`)) {
+                                    if (
+                                      confirm(
+                                        `Delete RSVP record for ${r.full_name}?`,
+                                      )
+                                    ) {
                                       destroyResponse.mutate(r.id);
                                     }
                                   }}
@@ -599,19 +888,27 @@ function AdminPage() {
                               <th className="px-4 py-3.5">Guest</th>
                               <th className="px-4 py-3.5">Contact</th>
                               <th className="px-4 py-3.5">Attendance</th>
-                              <th className="px-4 py-3.5">Days</th>
+                              <th className="px-4 py-3.5">Events</th>
                               <th className="px-4 py-3.5">Guests</th>
+                              <th className="px-4 py-3.5">
+                                Arrival / Logistics
+                              </th>
                               <th className="px-4 py-3.5">Submitted</th>
                               <th className="px-4 py-3.5 text-right">Action</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gold/15">
                             {visible.map((r) => {
-                              const isAttending = r.attendance === "yes" || r.attendance === "some";
+                              const isAttending =
+                                r.attendance === "yes" ||
+                                r.attendance === "some";
                               const cleanPhone = getCleanPhone(r.mobile);
 
                               return (
-                                <tr key={r.id} className="transition-colors hover:bg-ivory/50">
+                                <tr
+                                  key={r.id}
+                                  className="transition-colors hover:bg-ivory/50"
+                                >
                                   {/* Guest Name & Message */}
                                   <td className="px-4 py-3.5 align-top">
                                     <div className="font-semibold text-burgundy text-[0.92rem]">
@@ -658,14 +955,14 @@ function AdminPage() {
                                     {renderStatusBadge(r.attendance)}
                                   </td>
 
-                                  {/* Attending Days */}
-                                  <td className="px-4 py-3.5 align-top whitespace-nowrap">
+                                  {/* Attending Events */}
+                                  <td className="px-4 py-3.5 align-top">
                                     {isAttending ? (
-                                      <span className="rounded-md bg-ivory-deep/80 border border-gold/30 px-2 py-0.5 text-[0.72rem] font-medium text-burgundy">
-                                        {daysLabel(r.attending_days)}
-                                      </span>
+                                      renderEventBadges(r.attending_days)
                                     ) : (
-                                      <span className="text-warmgrey text-xs">&mdash;</span>
+                                      <span className="text-warmgrey text-xs">
+                                        &mdash;
+                                      </span>
                                     )}
                                   </td>
 
@@ -673,20 +970,48 @@ function AdminPage() {
                                   <td className="px-4 py-3.5 align-top whitespace-nowrap">
                                     {isAttending ? (
                                       <span className="font-medium text-charcoal tabular-nums text-xs">
-                                        {r.adults} Adults{r.children ? ` · ${r.children} Kids` : ""}
+                                        {r.adults} Adults
+                                        {r.children
+                                          ? ` · ${r.children} Kids`
+                                          : ""}
                                       </span>
                                     ) : (
-                                      <span className="text-warmgrey text-xs">&mdash;</span>
+                                      <span className="text-warmgrey text-xs">
+                                        &mdash;
+                                      </span>
+                                    )}
+                                  </td>
+
+                                  {/* Arrival / Travel Logistics */}
+                                  <td className="px-4 py-3.5 align-top whitespace-nowrap">
+                                    {isAttending &&
+                                    (r.travel_mode ||
+                                      r.travel_city ||
+                                      r.arrival_date ||
+                                      r.arrival_time) ? (
+                                      renderTravelBadge(
+                                        r.travel_mode,
+                                        r.travel_city,
+                                        r.arrival_date,
+                                        r.arrival_time,
+                                      )
+                                    ) : (
+                                      <span className="text-warmgrey text-xs">
+                                        &mdash;
+                                      </span>
                                     )}
                                   </td>
 
                                   {/* Date */}
                                   <td className="px-4 py-3.5 align-top text-xs text-warmgrey whitespace-nowrap">
-                                    {new Date(r.created_at).toLocaleDateString("en-IN", {
-                                      day: "numeric",
-                                      month: "short",
-                                      year: "numeric",
-                                    })}
+                                    {new Date(r.created_at).toLocaleDateString(
+                                      "en-IN",
+                                      {
+                                        day: "numeric",
+                                        month: "short",
+                                        year: "numeric",
+                                      },
+                                    )}
                                   </td>
 
                                   {/* Delete Action */}
@@ -695,7 +1020,11 @@ function AdminPage() {
                                       type="button"
                                       title="Delete RSVP"
                                       onClick={() => {
-                                        if (confirm(`Delete RSVP record for ${r.full_name}?`)) {
+                                        if (
+                                          confirm(
+                                            `Delete RSVP record for ${r.full_name}?`,
+                                          )
+                                        ) {
                                           destroyResponse.mutate(r.id);
                                         }
                                       }}
@@ -738,7 +1067,9 @@ function AdminPage() {
                         <input
                           required
                           value={draft.name}
-                          onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                          onChange={(e) =>
+                            setDraft({ ...draft, name: e.target.value })
+                          }
                           className="mt-1.5 w-full rounded-xl border border-gold/40 bg-ivory px-3.5 py-2.5 text-xs sm:text-sm text-charcoal outline-none focus:border-gold"
                           placeholder="e.g. Panjwani Family"
                         />
@@ -750,7 +1081,11 @@ function AdminPage() {
                         <select
                           value={draft.side}
                           onChange={(e) =>
-                            setDraft({ ...draft, side: e.target.value as "bride" | "groom" | "both" })
+                            setDraft({
+                              ...draft,
+                              side: e.target.value as
+                                "bride" | "groom" | "both",
+                            })
                           }
                           className="mt-1.5 w-full rounded-xl border border-gold/40 bg-ivory px-3.5 py-2.5 text-xs sm:text-sm text-charcoal outline-none focus:border-gold"
                         >
@@ -769,7 +1104,10 @@ function AdminPage() {
                           max={100}
                           value={draft.guestCount}
                           onChange={(e) =>
-                            setDraft({ ...draft, guestCount: parseInt(e.target.value) || 1 })
+                            setDraft({
+                              ...draft,
+                              guestCount: parseInt(e.target.value) || 1,
+                            })
                           }
                           className="mt-1.5 w-full rounded-xl border border-gold/40 bg-ivory px-3.5 py-2.5 text-xs sm:text-sm text-charcoal outline-none focus:border-gold"
                         />
@@ -783,14 +1121,19 @@ function AdminPage() {
                           onChange={(e) =>
                             setDraft({
                               ...draft,
-                              invitedDays: e.target.value as "24" | "25" | "both",
+                              invitedDays: e.target.value as
+                                "24" | "25" | "both",
                             })
                           }
                           className="mt-1.5 w-full rounded-xl border border-gold/40 bg-ivory px-3.5 py-2.5 text-xs sm:text-sm text-charcoal outline-none focus:border-gold"
                         >
                           <option value="both">Both Days — 24 & 25 Feb</option>
-                          <option value="24">24 Feb — Carnival & Sur Sandhya</option>
-                          <option value="25">25 Feb — Wedding & Reception</option>
+                          <option value="24">
+                            24 Feb — Carnival & Sur Sandhya
+                          </option>
+                          <option value="25">
+                            25 Feb — Wedding & Reception
+                          </option>
                         </select>
                       </div>
                       <div>
@@ -799,7 +1142,12 @@ function AdminPage() {
                         </label>
                         <input
                           value={draft.contactMobile}
-                          onChange={(e) => setDraft({ ...draft, contactMobile: e.target.value })}
+                          onChange={(e) =>
+                            setDraft({
+                              ...draft,
+                              contactMobile: e.target.value,
+                            })
+                          }
                           className="mt-1.5 w-full rounded-xl border border-gold/40 bg-ivory px-3.5 py-2.5 text-xs sm:text-sm text-charcoal outline-none focus:border-gold"
                           placeholder="+91 98765 43210"
                         />
@@ -810,7 +1158,9 @@ function AdminPage() {
                         </label>
                         <input
                           value={draft.notes}
-                          onChange={(e) => setDraft({ ...draft, notes: e.target.value })}
+                          onChange={(e) =>
+                            setDraft({ ...draft, notes: e.target.value })
+                          }
                           className="mt-1.5 w-full rounded-xl border border-gold/40 bg-ivory px-3.5 py-2.5 text-xs sm:text-sm text-charcoal outline-none focus:border-gold"
                           placeholder="e.g. Requires ground floor room"
                         />
@@ -838,9 +1188,17 @@ function AdminPage() {
 
                 {groups.length === 0 ? (
                   <div className="rounded-2xl border border-gold/30 bg-card p-8 sm:p-12 text-center text-warmgrey">
-                    <Users size={28} className="mx-auto text-gold-deep opacity-60 mb-2" />
-                    <p className="font-display text-base sm:text-lg text-burgundy">No invitation groups added yet</p>
-                    <p className="text-xs text-warmgrey mt-1">Create groups to organize families and track pending responses.</p>
+                    <Users
+                      size={28}
+                      className="mx-auto text-gold-deep opacity-60 mb-2"
+                    />
+                    <p className="font-display text-base sm:text-lg text-burgundy">
+                      No invitation groups added yet
+                    </p>
+                    <p className="text-xs text-warmgrey mt-1">
+                      Create groups to organize families and track pending
+                      responses.
+                    </p>
                   </div>
                 ) : (
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -858,7 +1216,11 @@ function AdminPage() {
                               type="button"
                               title={`Delete ${g.name || "group"}`}
                               onClick={() => {
-                                if (confirm(`Delete group "${g.name || "Invitation Group"}"?`)) {
+                                if (
+                                  confirm(
+                                    `Delete group "${g.name || "Invitation Group"}"?`,
+                                  )
+                                ) {
                                   destroy.mutate(g.id);
                                 }
                               }}
@@ -868,7 +1230,9 @@ function AdminPage() {
                             </button>
                           </div>
                           <p className="mt-1 text-[0.68rem] uppercase tracking-[0.14em] text-gold-deep font-semibold">
-                            {g.guest_count || 0} guests &middot; {daysLabel(g.invited_days)} &middot; {g.side || "both"}
+                            {g.guest_count || 0} guests &middot;{" "}
+                            {daysLabel(g.invited_days)} &middot;{" "}
+                            {g.side || "both"}
                           </p>
                           {g.contact_mobile && (
                             <p className="mt-2 text-xs font-mono text-charcoal">

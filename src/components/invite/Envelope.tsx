@@ -42,8 +42,15 @@ export function Envelope({ onOpened }: { onOpened: () => void }) {
           background:
             "radial-gradient(circle, rgba(229,193,88,0.5) 0%, rgba(103,18,36,0.3) 55%, transparent 100%)",
         }}
-        animate={{ scale: opening ? 1.3 : [1, 1.08, 1], opacity: opening ? 0.85 : [0.55, 0.75, 0.55] }}
-        transition={{ duration: opening ? 1.2 : 4, repeat: opening ? 0 : Infinity, ease: "easeInOut" }}
+        animate={{
+          scale: opening ? 1.3 : [1, 1.08, 1],
+          opacity: opening ? 0.85 : [0.55, 0.75, 0.55],
+        }}
+        transition={{
+          duration: opening ? 1.2 : 4,
+          repeat: opening ? 0 : Infinity,
+          ease: "easeInOut",
+        }}
       />
 
       <div
@@ -101,7 +108,10 @@ export function Envelope({ onOpened }: { onOpened: () => void }) {
           </div>
 
           {/* Corner Gold Filigree Motifs */}
-          <svg viewBox="0 0 415 288" className="absolute inset-0 h-full w-full pointer-events-none">
+          <svg
+            viewBox="0 0 415 288"
+            className="absolute inset-0 h-full w-full pointer-events-none"
+          >
             {/* Bottom-left corner accent */}
             <path
               d="M 6 270 Q 20 270 20 256 M 6 278 Q 30 278 30 250"
@@ -123,7 +133,13 @@ export function Envelope({ onOpened }: { onOpened: () => void }) {
           {/* Gold Foil Seam Trim SVG */}
           <svg viewBox="0 0 410 285" className="absolute inset-0 h-full w-full">
             <defs>
-              <linearGradient id="goldSeamGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <linearGradient
+                id="goldSeamGrad"
+                x1="0%"
+                y1="0%"
+                x2="100%"
+                y2="100%"
+              >
                 <stop offset="0%" stopColor="#F7DF94" />
                 <stop offset="35%" stopColor="#E5C158" />
                 <stop offset="70%" stopColor="#AA7C11" />
@@ -193,10 +209,19 @@ export function Envelope({ onOpened }: { onOpened: () => void }) {
           <motion.div
             className="pointer-events-none absolute -inset-3 rounded-full opacity-60 blur-md"
             style={{
-              background: "radial-gradient(circle, rgba(247,223,148,0.7) 0%, rgba(229,193,88,0.2) 60%, transparent 100%)",
+              background:
+                "radial-gradient(circle, rgba(247,223,148,0.7) 0%, rgba(229,193,88,0.2) 60%, transparent 100%)",
             }}
-            animate={broken ? { opacity: 0, scale: 1.6 } : { scale: [1, 1.12, 1], opacity: [0.5, 0.8, 0.5] }}
-            transition={broken ? { duration: 0.3 } : { duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+            animate={
+              broken
+                ? { opacity: 0, scale: 1.6 }
+                : { scale: [1, 1.12, 1], opacity: [0.5, 0.8, 0.5] }
+            }
+            transition={
+              broken
+                ? { duration: 0.3 }
+                : { duration: 2.4, repeat: Infinity, ease: "easeInOut" }
+            }
           />
 
           <motion.button
@@ -212,7 +237,11 @@ export function Envelope({ onOpened }: { onOpened: () => void }) {
                 "0 10px 25px rgba(0,0,0,0.55), 0 0 25px rgba(229,193,88,0.45), inset 0 2px 3px rgba(255,255,255,0.9), inset 0 -3px 6px rgba(0,0,0,0.65)",
               border: "1.5px solid #FDF0B2",
             }}
-            animate={broken ? { opacity: 0, scale: 1.35, rotate: 12 } : { opacity: 1, scale: [1, 1.03, 1] }}
+            animate={
+              broken
+                ? { opacity: 0, scale: 1.35, rotate: 12 }
+                : { opacity: 1, scale: [1, 1.03, 1] }
+            }
             transition={
               broken
                 ? { duration: 0.4, ease: EASE }
@@ -232,7 +261,10 @@ export function Envelope({ onOpened }: { onOpened: () => void }) {
             />
 
             {/* Embossed Royal Lotus Diamond Crest */}
-            <svg viewBox="0 0 40 40" className="h-7 w-7 text-[#3B2800] transition-transform duration-300 group-hover:scale-110 drop-shadow-[0_1px_1px_rgba(255,248,220,0.6)]">
+            <svg
+              viewBox="0 0 40 40"
+              className="h-7 w-7 text-[#3B2800] transition-transform duration-300 group-hover:scale-110 drop-shadow-[0_1px_1px_rgba(255,248,220,0.6)]"
+            >
               <path
                 d="M 20 5 C 21 11 25 14 31 16 C 25 18 21 21 20 27 C 19 21 15 18 9 16 C 15 14 19 11 20 5 Z"
                 fill="currentColor"

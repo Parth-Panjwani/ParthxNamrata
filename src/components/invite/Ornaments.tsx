@@ -3,7 +3,10 @@ import lotusCrest from "@/assets/lotus-crest.png";
 /** Fine gold rule with a lotus diamond at its centre. */
 export function Divider({ className = "" }: { className?: string }) {
   return (
-    <div className={`flex items-center justify-center gap-3 ${className}`} aria-hidden="true">
+    <div
+      className={`flex items-center justify-center gap-3 ${className}`}
+      aria-hidden="true"
+    >
       <span className="h-px w-16 bg-gradient-to-r from-transparent to-gold/70 sm:w-24" />
       <svg width="34" height="14" viewBox="0 0 34 14" className="text-gold">
         <path
@@ -20,7 +23,13 @@ export function Divider({ className = "" }: { className?: string }) {
 }
 
 /** Layered P&N monogram using public/monogram.png asset with blend mode for seamless background. */
-export function Monogram({ size = 100, className = "" }: { size?: number; className?: string }) {
+export function Monogram({
+  size = 100,
+  className = "",
+}: {
+  size?: number;
+  className?: string;
+}) {
   return (
     <img
       src="/monogram.png"
@@ -34,7 +43,13 @@ export function Monogram({ size = 100, className = "" }: { size?: number; classN
 }
 
 /** The generated foil crest — used as a section flourish. */
-export function Crest({ className = "", width = 210 }: { className?: string; width?: number }) {
+export function Crest({
+  className = "",
+  width = 210,
+}: {
+  className?: string;
+  width?: number;
+}) {
   return (
     <img
       src={lotusCrest}
@@ -105,7 +120,10 @@ const GOLD_DUST = [
 /** Slow floating rose petals & twinkling gold starlight — ambient & deeply atmospheric. */
 export function PetalField() {
   return (
-    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
+    <div
+      className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
+      aria-hidden="true"
+    >
       {/* Soft Ambient Radiance in Background */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[90vw] max-w-4xl h-[450px] bg-[radial-gradient(ellipse_at_top,rgba(229,193,88,0.18)_0%,rgba(103,18,36,0.08)_50%,transparent_80%)] blur-3xl pointer-events-none" />
 
@@ -124,7 +142,10 @@ export function PetalField() {
             ["--drift" as string]: p.drift,
           }}
         >
-          <svg viewBox="0 0 20 30" className="h-full w-full text-rose drop-shadow-[0_2px_4px_rgba(103,18,36,0.25)]">
+          <svg
+            viewBox="0 0 20 30"
+            className="h-full w-full text-rose drop-shadow-[0_2px_4px_rgba(103,18,36,0.25)]"
+          >
             <path
               d="M10 0C15 8 20 14 20 20c0 6-4.5 10-10 10S0 26 0 20C0 14 5 8 10 0Z"
               fill="currentColor"

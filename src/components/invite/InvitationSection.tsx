@@ -20,7 +20,10 @@ const fadeUp = {
 
 export function InvitationSection() {
   return (
-    <section id="invitation" className="canvas relative pt-10 pb-14 sm:pt-16 sm:pb-20">
+    <section
+      id="invitation"
+      className="canvas relative pt-10 pb-14 sm:pt-16 sm:pb-20"
+    >
       {/* Luxury Royal Card */}
       <motion.article
         initial={{ opacity: 0, scale: 0.96, y: 20 }}
@@ -60,7 +63,9 @@ export function InvitationSection() {
 
             <div className="my-2 sm:my-3 flex items-center justify-center gap-4">
               <span className="h-[1.5px] w-12 sm:w-20 bg-gradient-to-r from-transparent via-gold to-gold-deep" />
-              <span className="font-script text-3xl sm:text-4xl italic text-gold-deep select-none">&amp;</span>
+              <span className="font-script text-3xl sm:text-4xl italic text-gold-deep select-none">
+                &amp;
+              </span>
               <span className="h-[1.5px] w-12 sm:w-20 bg-gradient-to-l from-transparent via-gold to-gold-deep" />
             </div>
 

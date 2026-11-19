@@ -2,16 +2,26 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Lock, LogIn, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { CornerFlourishes, Divider, Monogram } from "@/components/invite/Ornaments";
+import {
+  CornerFlourishes,
+  Divider,
+  Monogram,
+} from "@/components/invite/Ornaments";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
   head: () => ({
     meta: [
       { title: "Host Sign In — Parth & Namrata" },
-      { name: "description", content: "Private sign in for the wedding hosts to manage RSVPs." },
+      {
+        name: "description",
+        content: "Private sign in for the wedding hosts to manage RSVPs.",
+      },
       { property: "og:title", content: "Host Sign In — Parth & Namrata" },
-      { property: "og:description", content: "Private sign in for the wedding hosts." },
+      {
+        property: "og:description",
+        content: "Private sign in for the wedding hosts.",
+      },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -26,7 +36,10 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && localStorage.getItem("pn_admin_authed") === "true") {
+    if (
+      typeof window !== "undefined" &&
+      localStorage.getItem("pn_admin_authed") === "true"
+    ) {
       navigate({ to: "/admin", replace: true });
     }
   }, [navigate]);
@@ -42,7 +55,10 @@ function AuthPage() {
       const validEmail = "parth.namrata2027@gmail.com";
       const validPassword = "parthxnamrata";
 
-      if (email.trim().toLowerCase() === validEmail && password === validPassword) {
+      if (
+        email.trim().toLowerCase() === validEmail &&
+        password === validPassword
+      ) {
         localStorage.setItem("pn_admin_authed", "true");
         try {
           await supabase.auth.signInWithPassword({ email, password });

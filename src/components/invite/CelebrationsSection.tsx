@@ -24,7 +24,15 @@ const item = {
 function EventMotif({ type }: { type: string }) {
   if (type === "carnival") {
     return (
-      <svg viewBox="0 0 40 40" className="h-6 w-6 text-gold-deep" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        viewBox="0 0 40 40"
+        className="h-6 w-6 text-gold-deep"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         {/* Sunburst / Festive Chakra */}
         <circle cx="20" cy="20" r="7" strokeWidth="1.8" />
         <circle cx="20" cy="20" r="2.5" fill="currentColor" />
@@ -34,16 +42,36 @@ function EventMotif({ type }: { type: string }) {
   }
   if (type === "sangeet") {
     return (
-      <svg viewBox="0 0 40 40" className="h-6 w-6 text-gold-deep" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        viewBox="0 0 40 40"
+        className="h-6 w-6 text-gold-deep"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         {/* Veena / Classical Music Notes */}
-        <path d="M12 28a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM28 24a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" fill="currentColor" fillOpacity="0.2" />
+        <path
+          d="M12 28a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM28 24a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"
+          fill="currentColor"
+          fillOpacity="0.2"
+        />
         <path d="M16 24V8l16-4v16M16 14l16-4" />
       </svg>
     );
   }
   if (type === "wedding") {
     return (
-      <svg viewBox="0 0 40 40" className="h-6 w-6 text-gold-deep" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        viewBox="0 0 40 40"
+        className="h-6 w-6 text-gold-deep"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         {/* Sacred Mangalsutra / Interlocking rings with Kalash gem */}
         <circle cx="16" cy="22" r="7" strokeWidth="1.8" />
         <circle cx="24" cy="22" r="7" strokeWidth="1.8" />
@@ -54,9 +82,21 @@ function EventMotif({ type }: { type: string }) {
   }
   // Reception / Celebration
   return (
-    <svg viewBox="0 0 40 40" className="h-6 w-6 text-gold-deep" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      viewBox="0 0 40 40"
+      className="h-6 w-6 text-gold-deep"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       {/* Royal Goblet / Diya of joy */}
-      <path d="M12 8h16l-2 10a6 6 0 0 1-12 0z" fill="currentColor" fillOpacity="0.2" />
+      <path
+        d="M12 8h16l-2 10a6 6 0 0 1-12 0z"
+        fill="currentColor"
+        fillOpacity="0.2"
+      />
       <path d="M20 24v8M14 32h12M12 8l8-4 8 4" />
       <circle cx="20" cy="14" r="1.5" fill="currentColor" />
     </svg>
@@ -81,7 +121,9 @@ export function CelebrationsSection() {
         transition={{ duration: 0.7, ease: EASE }}
         className="flex flex-col items-center text-center"
       >
-        <span className="eyebrow tracking-royal mb-1 text-gold-deep">The Functions</span>
+        <span className="eyebrow tracking-royal mb-1 text-gold-deep">
+          The Functions
+        </span>
         <h2 className="font-creative text-2xl sm:text-3xl font-bold tracking-widest text-burgundy uppercase">
           Celebrations
         </h2>

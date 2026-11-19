@@ -10,13 +10,14 @@ export const WEDDING_DATE_LABEL = "24 & 25 February 2027";
 /** Baraat / Wedding start muhurat for countdown */
 export const WEDDING_START_ISO = "2027-02-24T10:00:00+05:30";
 
-export const QUOTE = "Two beautiful days filled with love, laughter and lifelong memories.";
+export const QUOTE =
+  "Two beautiful days filled with love, laughter and lifelong memories.";
 
 export type CelebrationEvent = {
-  time: string;        // e.g. "10:00 AM"
-  label: string;       // fancy display name
-  sublabel: string;    // short descriptor
-  icon: string;        // emoji
+  time: string; // e.g. "10:00 AM"
+  label: string; // fancy display name
+  sublabel: string; // short descriptor
+  icon: string; // emoji
 };
 
 export type CelebrationDay = {
@@ -84,7 +85,8 @@ export const VENUE = {
   subtitle: "By King's Kraft, Rajkot",
   tagline: "Celebration Lawns & Resort",
   address: "Prabhu Farms & Resort By King's Kraft, Rajkot, Gujarat",
-  mapsUrl: "https://www.google.com/maps/search/?api=1&query=Prabhu+Farms+%26+Resort+By+King%E2%80%99s+Kraft+Rajkot",
+  mapsUrl:
+    "https://www.google.com/maps/search/?api=1&query=Prabhu+Farms+%26+Resort+By+King%E2%80%99s+Kraft+Rajkot",
   contactName: "Host",
   contactPhone: "+919879184143",
   contactPhoneLabel: "+91 98791 84143",

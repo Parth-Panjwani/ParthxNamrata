@@ -27,7 +27,6 @@ export function Countdown() {
 
   const values = t ? [t.days, t.hours, t.minutes, t.seconds] : [0, 0, 0, 0];
 
-
   return (
     <div className="grid grid-cols-4 gap-2 sm:gap-3">
       {UNITS.map((unit, i) => (
